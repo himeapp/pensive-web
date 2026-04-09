@@ -1,0 +1,13 @@
+# Render Blueprint: https://dashboard.render.com → New → Blueprint → 이 repo 연결
+services:
+  - type: web
+    name: pensive-web
+    runtime: node
+    region: singapore
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: OPENAI_API_KEY
+        sync: false
