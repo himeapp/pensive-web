@@ -346,6 +346,29 @@ html, body {
 }
 .btn-goal-continue:hover { transform: translateY(-1px); }
 
+/* ==================== EMPTY STATE ==================== */
+#empty-state {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none;
+  transition: opacity .5s;
+}
+#empty-state.hidden { opacity: 0; }
+.empty-icon { font-size: 48px; display: block; margin-bottom: 16px; opacity: .6; animation: empty-float 4s ease-in-out infinite; }
+@keyframes empty-float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.empty-title {
+  font-size: 17px; font-weight: 600;
+  color: rgba(200,180,255,.55);
+  margin-bottom: 8px; letter-spacing: .3px;
+}
+.empty-desc {
+  font-size: 13px; color: rgba(160,140,220,.35);
+  line-height: 1.8;
+}
+
 /* ==================== AUTH BUTTON ==================== */
 #auth-btn {
   position: fixed; top: 18px; right: 22px; z-index: 60;
@@ -490,6 +513,16 @@ html, body {
     <button id="release-ready-btn">🕊️ 우주로 보내기</button>
     <button class="btn-add-child" id="add-child-btn" style="display:none">＋ 세부 관념 추가</button>
     <button class="btn-dp-close" id="close-panel-btn">닫기</button>
+  </div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="hidden">
+    <span class="empty-icon">🌌</span>
+    <div class="empty-title">아직 관념이 없어요</div>
+    <div class="empty-desc">
+      마음속에 떠오르는 것들을 꺼내보세요<br>
+      아래 <strong style="color:rgba(180,150,255,.5)">＋ 생각 추가</strong> 버튼을 눌러 시작할 수 있어요
+    </div>
   </div>
 
   <button id="add-fab">＋ 생각 추가</button>
@@ -1187,6 +1220,7 @@ function cleanupNode(node){
   const idx=nodes.indexOf(node);
   if(idx>=0) nodes.splice(idx,1);
   updateConnections();
+  updateEmptyState();
   saveData();
 }
 
@@ -1312,11 +1346,13 @@ function processGroups(groups){
       setTimeout(()=>{
         let catNode=findMatchingCategory(catName);
         if(!catNode) catNode=addNode(catName,true,ci,null);
+        updateEmptyState();
         thoughts.forEach((thought,i)=>{
           setTimeout(()=>{
             const sim=findSimilarThought(thought);
             if(sim){ sim.userData.stages++; if(selectedNode===sim) selectNode(sim); }
             else addNode(thought,false,catNode.userData.cIdx,catNode);
+            updateEmptyState();
             saveData();
           },(i+1)*260);
         });
@@ -1367,10 +1403,13 @@ function enterSpace(){
   document.getElementById('input-overlay').classList.add('hidden');
   document.getElementById('space-ui').classList.remove('hidden');
   updateHUD();
-  // Show hint
-  const hint=document.getElementById('pet-hint');
-  hint.classList.add('show');
-  setTimeout(()=>hint.classList.remove('show'),3200);
+  updateEmptyState();
+  // Show hint only when there are nodes to pet
+  if(nodes.filter(n=>!n.userData.purified).length > 0){
+    const hint=document.getElementById('pet-hint');
+    hint.classList.add('show');
+    setTimeout(()=>hint.classList.remove('show'),3200);
+  }
 }
 
 // Add child from detail panel
@@ -1557,15 +1596,11 @@ function loadData(){
   }catch(e){ return false; }
 }
 
-function loadSample(){
-  const c0=addNode('직장 스트레스',true,0,null);
-  addNode('발표가 너무 두려워요',false,0,c0);
-  addNode('실적 압박이 심해요',false,0,c0);
-  const c1=addNode('자기 자신',true,1,null);
-  addNode('나는 충분하지 않아요',false,1,c1);
-  addNode('다 내 탓인 것 같아요',false,1,c1);
-  const c2=addNode('인간관계',true,3,null);
-  addNode('친구들이랑 멀어지는 것 같아요',false,3,c2);
+function updateEmptyState(){
+  const el = document.getElementById('empty-state');
+  if(!el) return;
+  const activeNodes = nodes.filter(n=>!n.userData.purified&&!n.userData.purifyingAnim);
+  el.classList.toggle('hidden', activeNodes.length > 0);
 }
 
 /* ================================================================
@@ -1736,11 +1771,9 @@ async function loadFromCloud(){
 })();
 
 (function init(){
-  const ok=loadData();
-  if(!ok) loadSample();
+  loadData();
   updateHUD();
-  // Show "enter" button if nodes exist
-  if(nodes.length>0) document.getElementById('enter-space-btn').classList.add('visible');
+  document.getElementById('enter-space-btn').classList.add('visible');
   loop();
 })();
 </script>
