@@ -1336,8 +1336,7 @@ function processGroups(groups){
   groups.forEach(({catName,thoughts})=>{
     const ci=colorIdx++%PALETTE.length;
     if(thoughts.length===0 && catName){
-      // Category with no children: create as standalone thought
-      setTimeout(()=>{ addNode(catName,true,ci,null); saveData(); }, delay);
+      setTimeout(()=>{ addNode(catName,false,ci,null); updateEmptyState(); saveData(); }, delay);
       delay+=350;
       return;
     }
@@ -1364,6 +1363,7 @@ function processGroups(groups){
           const sim=findSimilarThought(thought);
           if(sim){ sim.userData.stages++; }
           else addNode(thought,false,ci,null);
+          updateEmptyState();
           saveData();
         },delay);
         delay+=300;
