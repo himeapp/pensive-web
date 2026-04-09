@@ -371,6 +371,64 @@ html, body {
   line-height: 1.8;
 }
 
+/* ==================== FEEDBACK ==================== */
+#feedback-btn {
+  position: fixed;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: calc(18px + env(safe-area-inset-left, 0px));
+  z-index: 60;
+  background: none; border: none; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px; color: rgba(140,120,200,.38);
+  padding: 4px 6px; transition: color .2s;
+}
+#feedback-btn:hover { color: rgba(180,150,255,.7); }
+
+#feedback-overlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 400; background: rgba(0,0,14,.88); backdrop-filter: blur(8px);
+  opacity: 0; visibility: hidden; transition: all .3s;
+}
+#feedback-overlay.show { opacity: 1; visibility: visible; }
+.feedback-card {
+  width: 92%; max-width: 420px;
+  background: rgba(10,5,30,.95);
+  border: 1px solid rgba(120,60,255,.3);
+  border-radius: 20px; padding: 28px 28px 24px;
+  box-shadow: 0 0 60px rgba(80,0,200,.18);
+}
+.feedback-title { font-size: 15px; font-weight: 700; color: rgba(200,180,255,.9); margin-bottom: 4px; }
+.feedback-sub { font-size: 12px; color: rgba(160,140,210,.5); margin-bottom: 16px; }
+#feedback-text {
+  width: 100%; min-height: 100px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(120,80,220,.25);
+  border-radius: 10px; color: #e8e4ff;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 14px; line-height: 1.7;
+  padding: 12px 14px; resize: vertical; outline: none;
+  transition: border-color .2s;
+}
+#feedback-text:focus { border-color: rgba(140,80,255,.5); }
+#feedback-text::placeholder { color: rgba(160,140,210,.3); }
+.feedback-actions { display: flex; gap: 8px; margin-top: 14px; }
+#feedback-submit {
+  flex: 1; padding: 10px;
+  background: linear-gradient(135deg,#7733ff,#4422cc);
+  border: none; border-radius: 10px; color: #fff;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+#feedback-submit:hover { background: linear-gradient(135deg,#8844ff,#5533dd); }
+#feedback-cancel {
+  padding: 10px 18px;
+  background: transparent; border: 1px solid rgba(120,80,200,.25);
+  border-radius: 10px; color: rgba(160,140,210,.6);
+  font-family: 'Noto Sans KR', sans-serif; font-size: 13px;
+  cursor: pointer; transition: all .2s;
+}
+#feedback-cancel:hover { background: rgba(80,40,140,.2); }
+
 /* ==================== AUTH BUTTON ==================== */
 #auth-btn {
   position: fixed;
@@ -451,25 +509,25 @@ html, body {
 
 <!-- Mickey Mouse hand cursor -->
 <div id="hand-cursor">
-  <svg xmlns="http://www.w3.org/2000/svg" width="58" height="72" viewBox="0 0 58 72">
+  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="78" viewBox="0 0 64 78">
     <!-- Thumb -->
-    <ellipse cx="4.5" cy="38" rx="5.5" ry="10.5" fill="white" stroke="#111" stroke-width="2.3" transform="rotate(-22 4.5 38)"/>
+    <ellipse cx="5" cy="40" rx="6" ry="12" fill="white" stroke="#c8922a" stroke-width="2.2" transform="rotate(-20 5 40)"/>
     <!-- Index finger -->
-    <rect x="10" y="6"  width="10" height="25" rx="5"   fill="white" stroke="#111" stroke-width="2.3"/>
+    <rect x="11" y="5"  width="11" height="28" rx="5.5" fill="white" stroke="#c8922a" stroke-width="2.2"/>
     <!-- Middle finger -->
-    <rect x="21" y="2"  width="10" height="28" rx="5"   fill="white" stroke="#111" stroke-width="2.3"/>
+    <rect x="23" y="1"  width="11" height="31" rx="5.5" fill="white" stroke="#c8922a" stroke-width="2.2"/>
     <!-- Ring finger -->
-    <rect x="32" y="4"  width="10" height="26" rx="5"   fill="white" stroke="#111" stroke-width="2.3"/>
+    <rect x="35" y="3"  width="11" height="29" rx="5.5" fill="white" stroke="#c8922a" stroke-width="2.2"/>
     <!-- Pinky -->
-    <rect x="42" y="10" width="9"  height="21" rx="4.5" fill="white" stroke="#111" stroke-width="2.3"/>
-    <!-- Palm (fill over finger bases) -->
-    <rect x="5" y="27" width="46" height="36" rx="12" fill="white"/>
+    <rect x="46" y="10" width="10" height="23" rx="5"   fill="white" stroke="#c8922a" stroke-width="2.2"/>
+    <!-- Palm fill (covers finger bases) -->
+    <rect x="5" y="28" width="52" height="41" rx="14" fill="white"/>
     <!-- Palm outline -->
-    <rect x="5" y="27" width="46" height="36" rx="12" fill="none" stroke="#111" stroke-width="2.3"/>
-    <!-- Stitching lines -->
-    <path d="M14,42 Q28,39 46,42" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round"/>
-    <path d="M12,51 Q28,48 48,51" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round"/>
-    <path d="M14,59 Q28,56 46,59" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round"/>
+    <rect x="5" y="28" width="52" height="41" rx="14" fill="none" stroke="#c8922a" stroke-width="2.2"/>
+    <!-- Knuckle dots -->
+    <ellipse cx="20" cy="46" rx="3.5" ry="4.5" fill="#111"/>
+    <ellipse cx="31" cy="44" rx="3.5" ry="4.5" fill="#111"/>
+    <ellipse cx="42" cy="46" rx="3.5" ry="4.5" fill="#111"/>
   </svg>
 </div>
 
@@ -536,6 +594,22 @@ html, body {
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
 <div id="toast"></div>
 
+<!-- Feedback button -->
+<button id="feedback-btn">피드백</button>
+
+<!-- Feedback modal -->
+<div id="feedback-overlay">
+  <div class="feedback-card">
+    <div class="feedback-title">💬 피드백 보내기</div>
+    <div class="feedback-sub">불편한 점, 바라는 점, 뭐든 말해주세요</div>
+    <textarea id="feedback-text" placeholder="자유롭게 적어주세요..."></textarea>
+    <div class="feedback-actions">
+      <button id="feedback-submit">보내기</button>
+      <button id="feedback-cancel">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- Release popup -->
 <div id="release-overlay">
   <div class="release-card">
@@ -593,6 +667,12 @@ const PURIFY_MSGS = [
   '이 생각은 사실이 아닐 수도 있어요',
   '변화는 이 순간에도 일어나고 있어요',
   '있는 그대로, 충분합니다',
+  '지금 자신을 안아주세요',
+  '잠깐 여기, 나와 함께 머물러요',
+  '모든 감정을 느끼도록 허용해도 돼요',
+  '감정은 파도처럼 왔다가 지나가요',
+  '관념은 언제든 바꿀 수 있어요',
+  '나 자신을 믿어도 돼요',
 ];
 
 /* ================================================================
@@ -1331,6 +1411,56 @@ function parseStream(rawText){
   return result.filter(r=>r.thoughts.length>0||r.catName);
 }
 
+async function parseStreamWithAI(rawText){
+  const apiKey=localStorage.getItem('openai_api_key');
+  if(!apiKey) return null;
+  showToast('✨ 관념을 분석하고 있어요...');
+  try{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body:JSON.stringify({
+        model:'gpt-4o-mini',
+        temperature:0.3,
+        max_tokens:1000,
+        messages:[
+          {role:'system',content:'당신은 한국어 의식의 흐름 텍스트에서 주요 개념을 구조화하는 도우미입니다.\n'+
+            '- 상위 카테고리(부모)와 구체적인 생각들(자식)을 추출하세요.\n'+
+            '- 반드시 아래 JSON 형식만 출력하세요. 다른 설명·마크다운·코드펜스는 금지입니다.\n'+
+            '{"groups": [{"catName": "카테고리명", "thoughts": ["생각1", "생각2"]}]}\n'+
+            '- catName은 한글 3~10자.\n'+
+            '- 비슷한 생각은 하나의 카테고리로 묶으세요.\n'+
+            '- 카테고리는 최대 6개, 최소 1개.\n'+
+            '- thoughts는 해당 카테고리에 속하는 구체적 문장/구절 배열.'},
+          {role:'user',content:rawText}
+        ]
+      })
+    });
+    if(!res.ok) return null;
+    const data=await res.json();
+    const content=data.choices?.[0]?.message?.content?.trim();
+    if(!content) return null;
+    let jsonStr=content;
+    const fence=content.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
+    if(fence) jsonStr=fence[1].trim();
+    let parsed;
+    try{ parsed=JSON.parse(jsonStr); }
+    catch{ return null; }
+    const arr=parsed.groups;
+    if(!Array.isArray(arr)) return null;
+    const out=arr
+      .filter(g=>g&&typeof g.catName==='string')
+      .map(g=>({
+        catName:g.catName.trim(),
+        thoughts:Array.isArray(g.thoughts)?g.thoughts.filter(t=>typeof t==='string'&&t.trim()).map(t=>t.trim()):[]
+      }))
+      .filter(g=>g.catName.length>0);
+    return out.length?out:null;
+  }catch{
+    return null;
+  }
+}
+
 function findMatchingCategory(catName){
   return nodes.find(n=>{
     if(!n.userData.isCategory||n.userData.purified) return false;
@@ -1397,11 +1527,20 @@ function processGroups(groups){
    ================================================================ */
 const thoughtInput=document.getElementById('thought-input');
 
-function submitStream(andEnter){
+async function submitStream(andEnter){
   const text=thoughtInput.value.trim();
   if(!text){ thoughtInput.focus(); return; }
-  const groups=parseStream(text);
-  if(groups.length===0) return;
+  const hadKey=!!localStorage.getItem('openai_api_key');
+  let groups=null;
+  try{ groups=await parseStreamWithAI(text); }
+  catch{ groups=null; }
+  if(groups&&groups.length>0){
+    showToast('✨ AI 분석이 적용됐어요');
+  }else{
+    groups=parseStream(text);
+    if(hadKey&&groups.length>0) showToast('기본 분석으로 정리했어요');
+  }
+  if(!groups||groups.length===0) return;
   thoughtInput.value='';
   if(andEnter) enterSpace();
   processGroups(groups);
@@ -1688,6 +1827,38 @@ function loop(){
   updateHandRotation();
   renderer.render(scene,camera);
 }
+
+/* ================================================================
+   FEEDBACK
+   ================================================================ */
+document.getElementById('feedback-btn').addEventListener('click', ()=>{
+  document.getElementById('feedback-overlay').classList.add('show');
+  document.getElementById('feedback-text').focus();
+});
+document.getElementById('feedback-cancel').addEventListener('click', ()=>{
+  document.getElementById('feedback-overlay').classList.remove('show');
+});
+document.getElementById('feedback-submit').addEventListener('click', async ()=>{
+  const text = document.getElementById('feedback-text').value.trim();
+  if(!text) return;
+  const btn = document.getElementById('feedback-submit');
+  btn.textContent = '전송 중...'; btn.disabled = true;
+  try {
+    if(fbDb){
+      await fbDb.collection('feedback').add({
+        text,
+        uid: fbUser ? fbUser.uid : 'anonymous',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-overlay').classList.remove('show');
+    showToast('💌 피드백 감사합니다!');
+  } catch(e) {
+    showToast('전송 실패: '+e.message);
+  }
+  btn.textContent = '보내기'; btn.disabled = false;
+});
 
 /* ================================================================
    FIREBASE · GOOGLE AUTH · CLOUD SAVE

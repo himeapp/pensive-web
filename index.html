@@ -26,12 +26,13 @@ html, body {
 
 /* ==================== NODE LABELS ==================== */
 .node-label {
-  position: absolute; pointer-events: none; white-space: nowrap;
+  position: absolute; pointer-events: none;
   transform: translate(-50%, -230%);
   text-shadow: 0 0 8px currentColor;
+  text-align: center; line-height: 1.4;
 }
-.node-label.category { font-size: 13px; font-weight: 700; padding: 5px 13px; border-radius: 20px; }
-.node-label.thought  { font-size: 11px; font-weight: 400; padding: 3px 9px;  border-radius: 12px; opacity: 0.8; }
+.node-label.category { font-size: 15px; font-weight: 700; padding: 5px 14px; border-radius: 20px; white-space: nowrap; }
+.node-label.thought  { font-size: 13px; font-weight: 400; padding: 5px 11px;  border-radius: 12px; opacity: 1; white-space: normal; max-width: 180px; word-break: keep-all; }
 
 /* ==================== HAND CURSOR ==================== */
 #hand-cursor {
@@ -111,13 +112,13 @@ html, body {
   resize: vertical; outline: none;
   transition: border-color .2s, box-shadow .2s;
 }
-#thought-input::placeholder { color: rgba(160,140,210,.3); }
+#thought-input::placeholder { color: rgba(160,140,210,.55); }
 #thought-input:focus {
   border-color: rgba(140,80,255,.55);
   box-shadow: 0 0 24px rgba(120,60,255,.14);
 }
 .input-hint {
-  font-size: 11px; color: rgba(160,140,220,.45);
+  font-size: 12px; color: rgba(160,140,220,.68);
   margin-top: 8px; margin-bottom: 2px;
 }
 .btn-primary {
@@ -146,6 +147,7 @@ html, body {
 #enter-space-btn { display: none; }
 #enter-space-btn.visible { display: block; }
 
+
 /* ==================== SPACE UI ==================== */
 #space-ui {
   position: fixed; inset: 0; pointer-events: none; z-index: 20; transition: opacity .6s;
@@ -166,10 +168,10 @@ html, body {
   color: #9966ff; letter-spacing: .4px;
 }
 .hud-div { width: 1px; height: 16px; background: rgba(255,255,255,.1); }
-.hud-stat { font-size: 12px; color: rgba(180,160,220,.65); }
-.hud-stat strong { color: #e0d0ff; font-weight: 600; }
+.hud-stat { font-size: 12px; color: rgba(180,160,220,.85); }
+.hud-stat strong { color: #e8d8ff; font-weight: 600; }
 .hud-progress-wrap { display: flex; align-items: center; gap: 6px; }
-.hud-bar { width: 72px; height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
+.hud-bar { width: 72px; height: 7px; background: rgba(255,255,255,.13); border-radius: 4px; overflow: hidden; }
 .hud-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#7733ff,#cc88ff); border-radius: 3px; transition: width .5s ease; }
 
 /* ==================== DETAIL PANEL ==================== */
@@ -192,7 +194,7 @@ html, body {
 }
 #dp-dot { width: 8px; height: 8px; border-radius: 50%; }
 #dp-parent-row {
-  font-size: 11px; color: rgba(160,140,210,.6);
+  font-size: 11px; color: rgba(160,140,210,.82);
   margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
 }
 #dp-parent-row.hidden { display: none; }
@@ -207,7 +209,7 @@ html, body {
 }
 #dp-children-info {
   font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-bottom: 10px;
-  background: rgba(60,30,100,.25); color: rgba(180,160,230,.7);
+  background: rgba(60,30,100,.25); color: rgba(180,160,230,.88);
 }
 #dp-children-info.hidden { display: none; }
 
@@ -240,22 +242,22 @@ html, body {
 
 .btn-dp-close {
   width: 100%; padding: 8px;
-  background: transparent; border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px; color: rgba(180,160,210,.45);
+  background: transparent; border: 1px solid rgba(255,255,255,.14);
+  border-radius: 10px; color: rgba(180,160,210,.75);
   font-family: 'Noto Sans KR', sans-serif; font-size: 13px;
   cursor: pointer; transition: all .2s;
 }
-.btn-dp-close:hover { background: rgba(255,255,255,.05); color: rgba(200,185,235,.7); }
+.btn-dp-close:hover { background: rgba(255,255,255,.07); color: rgba(210,195,245,.95); }
 
 /* Petting hint */
 #pet-hint {
-  position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 132px; left: 50%; transform: translateX(-50%);
   background: rgba(0,0,10,.85); border: 1px solid rgba(120,80,255,.35);
   border-radius: 30px; padding: 9px 22px;
-  font-size: 12px; color: rgba(200,180,255,.8); font-weight: 500;
+  font-size: 12px; color: rgba(200,180,255,.88); font-weight: 500;
   pointer-events: none; z-index: 50;
   opacity: 0; transition: opacity .4s;
-  white-space: nowrap;
+  max-width: 88vw; white-space: normal; text-align: center;
 }
 #pet-hint.show { opacity: 1; }
 
@@ -363,13 +365,81 @@ html, body {
 }
 .empty-title {
   font-size: 17px; font-weight: 600;
-  color: rgba(200,180,255,.55);
+  color: rgba(200,180,255,.82);
   margin-bottom: 8px; letter-spacing: .3px;
 }
 .empty-desc {
-  font-size: 13px; color: rgba(160,140,220,.35);
+  font-size: 13px; color: rgba(160,140,220,.62);
   line-height: 1.8;
 }
+
+/* ==================== FEEDBACK ==================== */
+#feedback-btn {
+  position: fixed;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  left: calc(18px + env(safe-area-inset-left, 0px));
+  z-index: 60;
+  background: rgba(100,60,200,.18);
+  border: 1px solid rgba(140,90,255,.3);
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 500;
+  color: rgba(190,160,255,.75);
+  padding: 6px 14px;
+  transition: background .2s, color .2s, border-color .2s;
+  backdrop-filter: blur(8px);
+}
+#feedback-btn:hover {
+  background: rgba(120,70,240,.35);
+  border-color: rgba(180,120,255,.55);
+  color: #d4b8ff;
+}
+
+#feedback-overlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 400; background: rgba(0,0,14,.88); backdrop-filter: blur(8px);
+  opacity: 0; visibility: hidden; transition: all .3s;
+}
+#feedback-overlay.show { opacity: 1; visibility: visible; }
+.feedback-card {
+  width: 92%; max-width: 420px;
+  background: rgba(10,5,30,.95);
+  border: 1px solid rgba(120,60,255,.3);
+  border-radius: 20px; padding: 28px 28px 24px;
+  box-shadow: 0 0 60px rgba(80,0,200,.18);
+}
+.feedback-title { font-size: 15px; font-weight: 700; color: rgba(200,180,255,.9); margin-bottom: 4px; }
+.feedback-sub { font-size: 12px; color: rgba(160,140,210,.5); margin-bottom: 16px; }
+#feedback-text {
+  width: 100%; min-height: 100px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(120,80,220,.25);
+  border-radius: 10px; color: #e8e4ff;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 14px; line-height: 1.7;
+  padding: 12px 14px; resize: vertical; outline: none;
+  transition: border-color .2s;
+}
+#feedback-text:focus { border-color: rgba(140,80,255,.5); }
+#feedback-text::placeholder { color: rgba(160,140,210,.3); }
+.feedback-actions { display: flex; gap: 8px; margin-top: 14px; }
+#feedback-submit {
+  flex: 1; padding: 10px;
+  background: linear-gradient(135deg,#7733ff,#4422cc);
+  border: none; border-radius: 10px; color: #fff;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+#feedback-submit:hover { background: linear-gradient(135deg,#8844ff,#5533dd); }
+#feedback-cancel {
+  padding: 10px 18px;
+  background: transparent; border: 1px solid rgba(120,80,200,.25);
+  border-radius: 10px; color: rgba(160,140,210,.6);
+  font-family: 'Noto Sans KR', sans-serif; font-size: 13px;
+  cursor: pointer; transition: all .2s;
+}
+#feedback-cancel:hover { background: rgba(80,40,140,.2); }
 
 /* ==================== AUTH BUTTON ==================== */
 #auth-btn {
@@ -451,25 +521,25 @@ html, body {
 
 <!-- Mickey Mouse hand cursor -->
 <div id="hand-cursor">
-  <svg xmlns="http://www.w3.org/2000/svg" width="58" height="72" viewBox="0 0 58 72">
+  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="78" viewBox="0 0 64 78">
     <!-- Thumb -->
-    <ellipse cx="4.5" cy="38" rx="5.5" ry="10.5" fill="white" stroke="#111" stroke-width="2.3" transform="rotate(-22 4.5 38)"/>
+    <ellipse cx="5" cy="40" rx="6" ry="12" fill="white" stroke="#c8922a" stroke-width="2.2" transform="rotate(-20 5 40)"/>
     <!-- Index finger -->
-    <rect x="10" y="6"  width="10" height="25" rx="5"   fill="white" stroke="#111" stroke-width="2.3"/>
+    <rect x="11" y="5"  width="11" height="28" rx="5.5" fill="white" stroke="#c8922a" stroke-width="2.2"/>
     <!-- Middle finger -->
-    <rect x="21" y="2"  width="10" height="28" rx="5"   fill="white" stroke="#111" stroke-width="2.3"/>
+    <rect x="23" y="1"  width="11" height="31" rx="5.5" fill="white" stroke="#c8922a" stroke-width="2.2"/>
     <!-- Ring finger -->
-    <rect x="32" y="4"  width="10" height="26" rx="5"   fill="white" stroke="#111" stroke-width="2.3"/>
+    <rect x="35" y="3"  width="11" height="29" rx="5.5" fill="white" stroke="#c8922a" stroke-width="2.2"/>
     <!-- Pinky -->
-    <rect x="42" y="10" width="9"  height="21" rx="4.5" fill="white" stroke="#111" stroke-width="2.3"/>
-    <!-- Palm (fill over finger bases) -->
-    <rect x="5" y="27" width="46" height="36" rx="12" fill="white"/>
+    <rect x="46" y="10" width="10" height="23" rx="5"   fill="white" stroke="#c8922a" stroke-width="2.2"/>
+    <!-- Palm fill (covers finger bases) -->
+    <rect x="5" y="28" width="52" height="41" rx="14" fill="white"/>
     <!-- Palm outline -->
-    <rect x="5" y="27" width="46" height="36" rx="12" fill="none" stroke="#111" stroke-width="2.3"/>
-    <!-- Stitching lines -->
-    <path d="M14,42 Q28,39 46,42" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round"/>
-    <path d="M12,51 Q28,48 48,51" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round"/>
-    <path d="M14,59 Q28,56 46,59" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round"/>
+    <rect x="5" y="28" width="52" height="41" rx="14" fill="none" stroke="#c8922a" stroke-width="2.2"/>
+    <!-- Knuckle dots -->
+    <ellipse cx="20" cy="46" rx="3.5" ry="4.5" fill="#111"/>
+    <ellipse cx="31" cy="44" rx="3.5" ry="4.5" fill="#111"/>
+    <ellipse cx="42" cy="46" rx="3.5" ry="4.5" fill="#111"/>
   </svg>
 </div>
 
@@ -491,6 +561,7 @@ html, body {
     <button class="btn-primary" id="add-thought-btn">🌌 공간에 펼치기</button>
     <div class="divider"><span>또는</span></div>
     <button class="btn-enter" id="enter-space-btn">정화 공간 입장하기 →</button>
+
   </div>
 </div>
 
@@ -536,6 +607,22 @@ html, body {
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
 <div id="toast"></div>
 
+<!-- Feedback button -->
+<button id="feedback-btn">피드백</button>
+
+<!-- Feedback modal -->
+<div id="feedback-overlay">
+  <div class="feedback-card">
+    <div class="feedback-title">💬 피드백 보내기</div>
+    <div class="feedback-sub">불편한 점, 바라는 점, 뭐든 말해주세요</div>
+    <textarea id="feedback-text" placeholder="마음을 꺼내서 보니까 참으로 좋아요..."></textarea>
+    <div class="feedback-actions">
+      <button id="feedback-submit">보내기</button>
+      <button id="feedback-cancel">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- Release popup -->
 <div id="release-overlay">
   <div class="release-card">
@@ -576,12 +663,51 @@ const PALETTE = [
 function pal(i){ return PALETTE[i % PALETTE.length]; }
 
 const THEME_MAP = {
-  '직장·업무': ['회사','직장','팀장','상사','업무','발표','프로젝트','실적','야근','출근','퇴근','일이','일을','월급'],
-  '인간관계':  ['친구','가족','엄마','아빠','형','동생','오빠','언니','애인','남자','여자','사람','연락','외로'],
-  '자기 자신': ['나는','내가','나를','못해','실패','부족','창피','자존감','자신감','내 탓','나쁜','나에게'],
-  '미래·불안': ['미래','앞으로','나중','목표','꿈','막막','불안','두려','계획','방향'],
-  '건강·에너지':['피곤','지쳐','아파','잠을','수면','힘들','힘드','쉬고','건강','몸이'],
-  '돈·생활':   ['돈이','돈을','빚','저축','비용','월급','생활비','경제'],
+  '직장·업무': [
+    '회사','직장','팀장','상사','부장','과장','대리','사원','인사','채용','이직','퇴사','야근','잔업',
+    '출근','퇴근','근무','업무','일이','일을','일이 너무','프로젝트','실적','KPI','보고','발표',
+    '회의','미팅','협업','동료','직원','월급','연봉','승진','평가','피드백','거래처','마감','데드라인',
+  ],
+  '인간관계': [
+    '친구','지인','동창','가족','부모','엄마','아빠','어머니','아버지','형','누나','오빠','언니',
+    '동생','형제','자매','배우자','애인','연인','남자친구','여자친구','이별','헤어','사람','사람들',
+    '관계','소통','갈등','오해','신뢰','배신','외로','외롭','연락','답장','읽씹','모임','술자리',
+  ],
+  '자기 자신': [
+    '나는','내가','나를','난 ',' 나 ','스스로','자기','자신','자존감','자신감','부족','한계',
+    '무능','못해','못 했','실패','좌절','창피','수치','부끄','후회','자책','내 탓','비교','열등',
+    '나약','게으름','의지','습관','성격','내성적','예민','완벽주의','자기혐오','나에게','나한테',
+  ],
+  '미래·불안': [
+    '미래','앞으로','이후','나중','언젠가','방향','목표','계획','로드맵','진로','취업','이직',
+    '불확실','막막','답답','불안','초조','조마조마','걱정','근심','두려','공포','패닉',
+    '만약','최악','리스크','노후','은퇴','꿈','비전','전망','예측','준비','대비','선택','갈림길',
+  ],
+  '건강·에너지': [
+    '피곤','지쳐','지침','탈진','번아웃','무기력','체력','컨디션','건강','몸이','몸살',
+    '두통','복통','속이','소화','위장','감기','아파','통증','염증','병원','검사','처방','약을',
+    '수면','불면','잠을','잠이','낮잠','기력','회복','휴식','쉬고','힘들','힘드',
+  ],
+  '돈·생활': [
+    '돈이','돈을','돈 없','현금','통장','잔고','월급','급여','보너스','수당','연봉',
+    '세금','공과금','관리비','월세','전세','대출','이자','원리금','빚','부채','카드값','할부',
+    '명세서','청구','비용','지출','절약','저축','적금','예금','투자','주식','물가','경제','생활비',
+  ],
+  '감정·기분': [
+    '기분','감정','마음','심정','속상','서운','섭섭','짜증','화가','분노','억울',
+    '우울','침체','무력감','허무','공허','외로움','그리움','슬픔','눈물','울고','울컥',
+    '불쾌','불편','불안감','긴장','스트레스','압박','설렘','기대','행복','즐거','편안','안도','감사','미안',
+  ],
+  '학업·공부': [
+    '공부','학습','복습','예습','암기','시험','모의고사','수능','내신','성적','학점',
+    '학교','대학','대학원','학원','과제','리포트','논문','학위','전공','수업','강의',
+    '교수','조교','휴학','졸업','편입','유학','어학','자격증','스터디','독서','집중','낙제',
+  ],
+  '과거·후회': [
+    '과거','옛날','예전','그때','당시','어릴','학창','추억','회상','되돌','만약에','그랬',
+    '아쉽','후회','미련','잘못','실수','말실수','기회를 놓','놓쳤','돌이킬','바꿀 수 없',
+    '상처','트라우마','악몽','기억','잊','지워','용서','화해','반성','교훈','경험','사건',
+  ],
 };
 
 const PURIFY_MSGS = [
@@ -593,6 +719,12 @@ const PURIFY_MSGS = [
   '이 생각은 사실이 아닐 수도 있어요',
   '변화는 이 순간에도 일어나고 있어요',
   '있는 그대로, 충분합니다',
+  '지금 자신을 안아주세요',
+  '잠깐 여기, 나와 함께 머물러요',
+  '모든 감정을 느끼도록 허용해도 돼요',
+  '감정은 파도처럼 왔다가 지나가요',
+  '관념은 언제든 바꿀 수 있어요',
+  '나 자신을 믿어도 돼요',
 ];
 
 /* ================================================================
@@ -754,14 +886,14 @@ function spawnPos(isCategory, parentMesh){
   if(parentMesh){
     const pp = parentMesh.position;
     const ang = Math.random()*Math.PI*2;
-    const rad = 2.2 + Math.random()*2;
-    return new THREE.Vector3(pp.x+Math.cos(ang)*rad, pp.y+(Math.random()-.5)*2.5, pp.z+Math.sin(ang)*rad);
+    const rad = 3.8 + Math.random()*2.8;
+    return new THREE.Vector3(pp.x+Math.cos(ang)*rad, pp.y+(Math.random()-.5)*3.5, pp.z+Math.sin(ang)*rad);
   }
   const ga = Math.PI*(3-Math.sqrt(5));
   const i = nodes.filter(n=>n.userData.isCategory).length+1;
-  const r = 4+Math.sqrt(i)*3;
+  const r = 6+Math.sqrt(i)*4;
   const th = i*ga + Math.random()*.6;
-  return new THREE.Vector3(Math.cos(th)*r, (Math.random()-.5)*14, Math.sin(th)*r);
+  return new THREE.Vector3(Math.cos(th)*r, (Math.random()-.5)*16, Math.sin(th)*r);
 }
 
 function addNode(text, isCategory, cIdx, parentMesh, pos){
@@ -832,10 +964,22 @@ function createLabel(text, isCategory, ci){
   const p = pal(ci);
   const div = document.createElement('div');
   div.className = 'node-label '+(isCategory?'category':'thought');
-  div.textContent = text.length>14 ? text.slice(0,13)+'…' : text;
-  div.style.color  = `rgb(${Math.min(p.r+90,255)},${Math.min(p.g+90,255)},${Math.min(p.b+90,255)})`;
-  div.style.background = `rgba(${p.r},${p.g},${p.b},.32)`;
-  div.style.border = `1px solid rgba(${p.r},${p.g},${p.b},.48)`;
+  const limit = isCategory ? 20 : 30;
+  div.textContent = text.length>limit ? text.slice(0,limit-1)+'…' : text;
+  if(isCategory){
+    // 카테고리: 팔레트 색상 그대로, 선명하고 진하게
+    div.style.color      = `rgb(${Math.min(p.r+90,255)},${Math.min(p.g+90,255)},${Math.min(p.b+90,255)})`;
+    div.style.background = `rgba(${p.r},${p.g},${p.b},.52)`;
+    div.style.border     = `1px solid rgba(${p.r},${p.g},${p.b},.55)`;
+  } else {
+    // 세부 관념: 같은 색상 계열이지만 흰색과 혼합해 파스텔·연한 톤으로 분리
+    const tr = Math.round(p.r*0.45 + 130);
+    const tg = Math.round(p.g*0.45 + 130);
+    const tb = Math.round(p.b*0.45 + 140);
+    div.style.color      = `rgb(${Math.min(tr+40,255)},${Math.min(tg+40,255)},${Math.min(tb+40,255)})`;
+    div.style.background = `rgba(${tr},${tg},${tb},.28)`;
+    div.style.border     = `1px solid rgba(${tr},${tg},${tb},.38)`;
+  }
   labelsEl.appendChild(div);
   return div;
 }
@@ -1232,6 +1376,10 @@ function releaseUpward(node){
 }
 
 function cleanupNode(node){
+  purifiedHistory.push({
+    text:node.userData.text, isCategory:node.userData.isCategory,
+    cIdx:node.userData.cIdx, purifiedAt:new Date().toISOString()
+  });
   scene.remove(node);
   node.userData.purified=true;
   if(node.userData.label){ labelsEl.removeChild(node.userData.label); node.userData.label=null; }
@@ -1247,6 +1395,7 @@ function cleanupNode(node){
    SCORING
    ================================================================ */
 let dailyPurified=0, totalPurified=0, goalShown=false;
+let purifiedHistory=[];
 function onPurified(){
   dailyPurified++; totalPurified++;
   updateHUD(); saveData();
@@ -1268,67 +1417,93 @@ document.getElementById('goal-continue-btn').addEventListener('click',()=>docume
 /* ================================================================
    STREAM-OF-CONSCIOUSNESS PARSER
    ================================================================ */
+function _escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function _kwScore(s,k){
+  if(!k||!s) return 0;
+  const re=new RegExp('(?:^|[^\\w가-힣])'+_escRe(k)+'(?:[^\\w가-힣]|$)','u');
+  if(re.test(s)) return 2;
+  if(s.includes(k)) return 1;
+  return 0;
+}
 function detectTheme(s){
-  let best=null, bestScore=0;
+  let best=null, bestScore=0, bestLen=0;
   for(const [theme,keys] of Object.entries(THEME_MAP)){
-    const score=keys.reduce((a,k)=>a+(s.includes(k)?1:0),0);
-    if(score>bestScore){ bestScore=score; best=theme; }
+    const score=keys.reduce((a,k)=>a+_kwScore(s,k),0);
+    if(score>bestScore||(score===bestScore&&score>0&&keys.length>bestLen)){
+      bestScore=score; best=theme; bestLen=keys.length;
+    }
   }
-  return bestScore>0?best:null;
+  return {theme:bestScore>0?best:null, score:bestScore};
 }
 
 function parseStream(rawText){
   const sentences=rawText
-    .split(/[.!?\n~]+/)
+    .split(/[.!?…~｡。、，,\n\r\t]+/)
     .map(s=>s.trim())
-    .filter(s=>s.length>1);
+    .filter(s=>s.length>=4);
 
   if(sentences.length===0) return [];
   if(sentences.length===1){
     const s=sentences[0];
-    return [{ catName: s.length<=12 ? s : null, thoughts: s.length<=12 ? [] : [s] }];
+    const {theme}=detectTheme(s);
+    if(theme) return [{catName:theme, thoughts:[s]}];
+    return [{catName:s.length<=12?s:null, thoughts:s.length<=12?[]:[s]}];
   }
 
-  // Tag by theme
-  const tagged=sentences.map(s=>({text:s, theme:detectTheme(s)}));
+  const tagged=sentences.map(text=>{
+    const {theme,score}=detectTheme(text);
+    return {text,theme,score};
+  });
 
-  // Count per theme
   const counts={};
-  tagged.forEach(({theme})=>{ if(theme) counts[theme]=(counts[theme]||0)+1; });
+  tagged.forEach(({theme,score})=>{
+    if(!theme) return;
+    counts[theme]=(counts[theme]||0)+1;
+    if(score>=2) counts[theme+'__s']=(counts[theme+'__s']||0)+1;
+  });
 
-  const result=[];
-  const used=new Set();
-
-  // Groups with 2+ sentences
+  const result=[], used=new Set();
   for(const [theme,cnt] of Object.entries(counts)){
-    if(cnt>=2){
+    if(theme.endsWith('__s')) continue;
+    const strong=counts[theme+'__s']||0;
+    if(cnt>=2||(cnt>=1&&strong>=1)){
       const group=tagged.filter(t=>t.theme===theme);
       group.forEach(t=>used.add(t.text));
       result.push({catName:theme, thoughts:group.map(t=>t.text)});
     }
   }
-  // Remaining
+
   const remaining=tagged.filter(t=>!used.has(t.text));
-  remaining.forEach(({text,theme})=>{
-    // Try to add to existing group
+  remaining.forEach(({text,theme,score})=>{
     const eg=theme?result.find(r=>r.catName===theme):null;
-    if(eg){ eg.thoughts.push(text); }
-    else {
-      // standalone
-      const existingGroup=result.find(r=>r.catName==='일상의 생각');
-      if(existingGroup && !theme) existingGroup.thoughts.push(text);
-      else if(!theme){
-        const mg=result.find(r=>r.catName==='일상의 생각');
-        if(mg) mg.thoughts.push(text);
-        else result.push({catName:'일상의 생각', thoughts:[text]});
-      } else {
-        result.push({catName:theme, thoughts:[text]});
-      }
+    if(eg){ eg.thoughts.push(text); return; }
+    if(theme&&score>=2){ result.push({catName:theme,thoughts:[text]}); return; }
+    if(!theme){
+      const daily=result.find(r=>r.catName==='일상의 생각');
+      if(daily) daily.thoughts.push(text);
+      else result.push({catName:'일상의 생각',thoughts:[text]});
+    } else {
+      result.push({catName:theme,thoughts:[text]});
     }
   });
 
-  // Filter empty cats
   return result.filter(r=>r.thoughts.length>0||r.catName);
+}
+
+async function parseStreamWithAI(rawText){
+  showToast('✨ 관념을 분석하고 있어요...');
+  try{
+    const res=await fetch('/api/parse',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:rawText})
+    });
+    if(!res.ok) return null;
+    const data=await res.json();
+    const arr=data.groups;
+    if(!Array.isArray(arr)||arr.length===0) return null;
+    return arr;
+  }catch{ return null; }
 }
 
 function findMatchingCategory(catName){
@@ -1397,13 +1572,19 @@ function processGroups(groups){
    ================================================================ */
 const thoughtInput=document.getElementById('thought-input');
 
-function submitStream(andEnter){
+async function submitStream(andEnter){
   const text=thoughtInput.value.trim();
   if(!text){ thoughtInput.focus(); return; }
-  const groups=parseStream(text);
-  if(groups.length===0) return;
   thoughtInput.value='';
   if(andEnter) enterSpace();
+  let groups=null;
+  try{ groups=await parseStreamWithAI(text); }catch{ groups=null; }
+  if(groups&&groups.length>0){
+    showToast('🤖 AI가 관념을 정리했어요');
+  } else {
+    groups=parseStream(text);
+  }
+  if(!groups||groups.length===0) return;
   processGroups(groups);
 }
 
@@ -1412,6 +1593,7 @@ thoughtInput.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.ctrlKey){ e.preventDefault(); submitStream(true); }
 });
 document.getElementById('enter-space-btn').addEventListener('click',enterSpace);
+
 document.getElementById('add-fab').addEventListener('click',()=>{
   document.getElementById('input-overlay').classList.remove('hidden');
   document.getElementById('space-ui').classList.add('hidden');
@@ -1578,6 +1760,7 @@ const SKEY='mindcleanse_v4';
 function saveData(){
   const data={
     date:new Date().toDateString(), daily:dailyPurified, total:totalPurified, ci:colorIdx,
+    purifiedHistory:purifiedHistory,
     nodes:nodes.filter(n=>!n.userData.purified).map(n=>({
       text:n.userData.text, isCategory:n.userData.isCategory,
       cIdx:n.userData.cIdx, parentId:n.userData.parentId, id:n.userData.id,
@@ -1596,6 +1779,7 @@ function loadData(){
     if(data.date!==new Date().toDateString()) dailyPurified=0;
     else{ dailyPurified=data.daily||0; goalShown=dailyPurified>=3; }
     totalPurified=data.total||0; colorIdx=data.ci||0;
+    purifiedHistory=Array.isArray(data.purifiedHistory)?data.purifiedHistory:[];
     if(!Array.isArray(data.nodes)||data.nodes.length===0) return false;
     const idMap={};
     data.nodes.forEach(nd=>{
@@ -1690,6 +1874,41 @@ function loop(){
 }
 
 /* ================================================================
+   FEEDBACK
+   ================================================================ */
+document.getElementById('feedback-btn').addEventListener('click', ()=>{
+  document.getElementById('feedback-overlay').classList.add('show');
+  document.getElementById('feedback-text').focus();
+});
+document.getElementById('feedback-cancel').addEventListener('click', ()=>{
+  document.getElementById('feedback-overlay').classList.remove('show');
+});
+document.getElementById('feedback-submit').addEventListener('click', async ()=>{
+  const text = document.getElementById('feedback-text').value.trim();
+  if(!text) return;
+  const btn = document.getElementById('feedback-submit');
+  btn.textContent = '전송 중...'; btn.disabled = true;
+  try {
+    if(fbDb){
+      await fbDb.collection('feedback').add({
+        text,
+        uid: fbUser ? fbUser.uid : 'anonymous',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      // Firebase 미연결 시 fallback: mailto
+      window.open('mailto:feedback@example.com?subject=피드백&body='+encodeURIComponent(text));
+    }
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-overlay').classList.remove('show');
+    showToast('💌 피드백 감사합니다!');
+  } catch(e) {
+    showToast('전송 실패: '+e.message);
+  }
+  btn.textContent = '보내기'; btn.disabled = false;
+});
+
+/* ================================================================
    FIREBASE · GOOGLE AUTH · CLOUD SAVE
    ================================================================
    ⚠️  아래 FIREBASE_CONFIG 를 본인의 Firebase 프로젝트 값으로 교체하세요.
@@ -1737,6 +1956,7 @@ async function loadFromCloud(){
     if(data.date !== new Date().toDateString()) dailyPurified = 0;
     else{ dailyPurified = data.daily||0; goalShown = dailyPurified>=3; }
     totalPurified = data.total||0; colorIdx = data.ci||0;
+    purifiedHistory = Array.isArray(data.purifiedHistory) ? data.purifiedHistory : [];
     // Rebuild nodes
     if(Array.isArray(data.nodes) && data.nodes.length){
       const idMap = {};
