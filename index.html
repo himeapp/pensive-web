@@ -517,9 +517,9 @@ html, body {
 
   <!-- Empty state -->
   <div id="empty-state" class="hidden">
-    <span class="empty-icon">🌌</span>
-    <div class="empty-title">아직 관념이 없어요</div>
-    <div class="empty-desc">
+    <span class="empty-icon" id="empty-icon">🌌</span>
+    <div class="empty-title" id="empty-title">아직 관념이 없어요</div>
+    <div class="empty-desc" id="empty-desc">
       마음속에 떠오르는 것들을 꺼내보세요<br>
       아래 <strong style="color:rgba(180,150,255,.5)">＋ 생각 추가</strong> 버튼을 눌러 시작할 수 있어요
     </div>
@@ -1600,7 +1600,16 @@ function updateEmptyState(){
   const el = document.getElementById('empty-state');
   if(!el) return;
   const activeNodes = nodes.filter(n=>!n.userData.purified&&!n.userData.purifyingAnim);
-  el.classList.toggle('hidden', activeNodes.length > 0);
+  if(activeNodes.length > 0){ el.classList.add('hidden'); return; }
+
+  const purified = totalPurified > 0;
+  document.getElementById('empty-icon').textContent   = purified ? '✨' : '🌌';
+  document.getElementById('empty-title').textContent  = purified ? '모든 관념이 정화됐어요' : '아직 관념이 없어요';
+  document.getElementById('empty-desc').innerHTML     = purified
+    ? '마음이 조금 가벼워졌길 바라요 💜<br><span style="color:rgba(160,140,210,.35);font-size:12px">새로운 생각이 떠오르면 언제든 꺼내보세요</span>'
+    : '마음속에 떠오르는 것들을 꺼내보세요<br>아래 <strong style="color:rgba(180,150,255,.5)">＋ 생각 추가</strong> 버튼을 눌러 시작할 수 있어요';
+
+  el.classList.remove('hidden');
 }
 
 /* ================================================================
