@@ -1453,6 +1453,7 @@ function onPointerDown(cx,cy){
     startPet(cx,cy);
     showHand(cx,cy,'petting');
     if(!hit.userData.strokeBadge) createStrokeBadge(hit);
+    selectNode(hit);
   } else {
     isDragging=true; hasDragged=false;
     prevMouse={x:cx,y:cy};
@@ -1478,11 +1479,7 @@ function onPointerMove(cx,cy){
 }
 function onPointerUp(cx,cy){
   if(pettingNode){
-    if(!wasPetting) selectNode(pettingNode); // short press = select
-    else {
-      // Keep node in place after petting
-      if(pettingNode.userData.wobbleMag) pettingNode.userData.wobbleMag=0;
-    }
+    if(pettingNode.userData.wobbleMag) pettingNode.userData.wobbleMag=0;
     hideHand();
     pettingNode=null;
   } else {
