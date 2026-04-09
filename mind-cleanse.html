@@ -910,8 +910,22 @@ function getNodeAt(cx, cy){
   mouseV.x=((cx-rect.left)/rect.width)*2-1;
   mouseV.y=-((cy-rect.top)/rect.height)*2+1;
   raycaster.setFromCamera(mouseV, camera);
-  const hits=raycaster.intersectObjects(nodes.filter(n=>!n.userData.purified&&!n.userData.purifyingAnim), false);
-  return hits.length>0 ? hits[0].object : null;
+  const active=nodes.filter(n=>!n.userData.purified&&!n.userData.purifyingAnim);
+  const hits=raycaster.intersectObjects(active, false);
+  if(hits.length>0) return hits[0].object;
+
+  // 모바일 터치 보정: 스크린 좌표 근접 판정
+  const TOUCH_R = 52;
+  let closest=null, minD=TOUCH_R;
+  active.forEach(node=>{
+    const v=node.position.clone().project(camera);
+    if(v.z>1) return;
+    const sx=(v.x*.5+.5)*innerWidth;
+    const sy=(-v.y*.5+.5)*innerHeight;
+    const d=Math.hypot(cx-sx, cy-sy);
+    if(d<minD){ minD=d; closest=node; }
+  });
+  return closest;
 }
 
 let selectedNode = null;
