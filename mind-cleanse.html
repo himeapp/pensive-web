@@ -1542,8 +1542,8 @@ function updateConnections(elapsed){
     }
     const inv=1/L;
     dx*=inv; dy*=inv; dz*=inv;
-    const amp=L*0.021;
-    const eps=amp*Math.sin(t*2.05+(c.userData.elasticPhase||0));
+    const amp=L*0.032;
+    const eps=amp*Math.sin(t*2.12+(c.userData.elasticPhase||0));
     const a=c.geometry.attributes.position.array;
     a[0]=ax+dx*eps; a[1]=ay+dy*eps; a[2]=az+dz*eps;
     a[3]=bx-dx*eps; a[4]=by-dy*eps; a[5]=bz-dz*eps;
