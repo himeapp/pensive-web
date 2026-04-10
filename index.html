@@ -492,13 +492,16 @@ html, body {
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   right: calc(14px + env(safe-area-inset-right, 0px));
   z-index: 105;
-  font-size: 11px;
+  font-size: 0;
+  line-height: 0;
   font-weight: 400;
   color: rgba(140,130,195,.45);
   pointer-events: none;
-  letter-spacing: 0.02em;
 }
 #creator-credit a {
+  font-size: 11px;
+  line-height: normal;
+  letter-spacing: 0.02em;
   color: inherit;
   font-weight: inherit;
   text-decoration: none;
