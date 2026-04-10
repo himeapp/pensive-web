@@ -207,23 +207,25 @@ html, body {
   .hud-div { height: 14px; }
 }
 
-/* ==================== DETAIL PANEL (우측 사이드) ==================== */
+/* ==================== DETAIL PANEL (우측 콤팩트) ==================== */
 #detail-panel {
   position: absolute;
   left: auto;
-  right: max(10px, env(safe-area-inset-right, 0px));
-  top: calc(72px + env(safe-area-inset-top, 0px));
-  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  right: max(8px, env(safe-area-inset-right, 0px));
+  /* top+bottom 동시 지정 시 패널이 세로로 늘어나 빈 여백이 커짐 → 하단 기준 + 내용 높이 + max-height */
+  top: auto;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   transform: none;
-  width: calc(100vw - 20px);
-  max-width: 340px;
+  width: calc(100vw - 16px);
+  max-width: 220px;
+  max-height: calc(100vh - 168px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   z-index: 25;
   background: rgba(6, 2, 18, .94);
-  border: 1px solid rgba(130, 80, 230, .35);
-  border-radius: 18px;
-  padding: 12px 14px 12px;
-  backdrop-filter: blur(22px);
-  box-shadow: -8px 0 36px rgba(60, 0, 140, .35), 0 0 1px rgba(200, 180, 255, .2);
+  border: 1px solid rgba(130, 80, 230, .32);
+  border-radius: 14px;
+  padding: 9px 10px 10px;
+  backdrop-filter: blur(20px);
+  box-shadow: -6px 0 28px rgba(60, 0, 140, .32), 0 0 1px rgba(200, 180, 255, .18);
   pointer-events: auto;
   overflow-x: hidden;
   overflow-y: auto;
@@ -233,123 +235,77 @@ html, body {
 #detail-panel.hidden {
   opacity: 0;
   visibility: hidden;
-  transform: translateX(18px);
+  transform: translateX(12px);
 }
 
-.dp-bar-top {
+.dp-stack {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
-  flex-wrap: nowrap;
-  margin-bottom: 8px;
-}
-.dp-bar-identity {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 6px;
 }
 
-#dp-node-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 700;
-  padding: 3px 10px; border-radius: 20px; margin-bottom: 0;
+#dp-category-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(205, 190, 248, .9);
+  line-height: 1.35;
+  word-break: keep-all;
 }
-#dp-dot { width: 8px; height: 8px; border-radius: 50%; }
-#dp-parent-row {
-  font-size: 11px; color: rgba(160,140,210,.82);
-  margin-bottom: 0; display: flex; align-items: center; gap: 5px;
-  max-width: 100%;
-}
-#dp-parent-row.hidden { display: none; }
-#dp-parent-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
 #detail-text {
-  font-size: 14px; font-weight: 500; color: #ebe4ff;
-  line-height: 1.55;
-  margin-bottom: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(188, 178, 228, .82);
+  line-height: 1.45;
+  margin: 0;
   word-break: keep-all;
-  flex: none;
-  width: 100%;
-  min-width: 0;
-}
-
-.dp-bar-meta {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 8px;
-  margin-bottom: 8px;
 }
 
 #dp-stage-info {
-  font-size: 11px; border-radius: 10px; padding: 6px 10px; margin-bottom: 0;
-  background: rgba(120,60,220,.15); color: rgba(200,180,240,.85);
-  border-left: 2px solid rgba(150,80,255,.5);
-  flex: none;
-  width: 100%;
-  min-width: 0;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 5px 8px;
+  margin: 0;
+  background: rgba(120, 60, 220, .14);
+  color: rgba(205, 190, 240, .88);
+  border-left: 2px solid rgba(150, 80, 255, .42);
+  line-height: 1.4;
+  word-break: keep-all;
 }
-#dp-children-info {
-  font-size: 11px; padding: 6px 10px; border-radius: 10px; margin-bottom: 0;
-  background: rgba(60,30,100,.28); color: rgba(180,160,230,.88);
-  flex: none;
-  width: 100%;
-}
-#dp-children-info.hidden { display: none; }
 
 .ai-msg {
-  font-size: 11px; color: rgba(160,140,220,.65);
-  padding: 6px 10px; margin-bottom: 8px;
-  line-height: 1.45; font-style: italic;
-  border-left: 2px solid rgba(120,60,220,.35);
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  color: rgba(230, 218, 255, .94);
+  padding: 6px 8px;
+  margin: 0;
+  line-height: 1.45;
+  border-left: 2px solid rgba(150, 110, 230, .4);
   border-radius: 0 8px 8px 0;
-  background: rgba(40, 20, 80, .2);
+  background: rgba(52, 32, 95, .34);
+  word-break: keep-all;
 }
-
-.dp-bar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.btn-add-child {
-  flex: 1 1 120px;
-  min-width: 0;
-  padding: 9px 12px;
-  background: rgba(80,40,140,.25); border: 1px solid rgba(120,80,220,.35);
-  border-radius: 10px; color: rgba(180,150,255,.85);
-  font-family: 'Noto Sans KR', sans-serif; font-size: 12px;
-  cursor: pointer; transition: all .2s; margin-bottom: 0;
-}
-.btn-add-child:hover { background: rgba(100,50,180,.35); }
-
-/* Release button (appears when ready to release parent) */
-#release-ready-btn {
-  flex: 1 1 140px;
-  min-width: 0;
-  padding: 9px 12px;
-  background: linear-gradient(135deg, rgba(255,200,50,.2), rgba(255,150,20,.15));
-  border: 1px solid rgba(255,180,40,.4); border-radius: 10px;
-  color: rgba(255,200,80,.9);
-  font-family: 'Noto Sans KR', sans-serif; font-size: 12px; font-weight: 600;
-  cursor: pointer; transition: all .2s; margin-bottom: 0; display: none;
-}
-#release-ready-btn:hover { background: linear-gradient(135deg, rgba(255,200,50,.3), rgba(255,150,20,.25)); }
 
 .btn-dp-close {
-  flex: 0 0 auto;
-  padding: 9px 18px;
-  background: transparent; border: 1px solid rgba(255,255,255,.14);
-  border-radius: 10px; color: rgba(180,160,210,.75);
-  font-family: 'Noto Sans KR', sans-serif; font-size: 12px;
-  cursor: pointer; transition: all .2s;
+  width: 100%;
+  margin-top: 2px;
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 9px;
+  color: rgba(175, 160, 210, .78);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background .2s, color .2s;
 }
-.btn-dp-close:hover { background: rgba(255,255,255,.07); color: rgba(210,195,245,.95); }
+.btn-dp-close:hover {
+  background: rgba(255, 255, 255, .07);
+  color: rgba(210, 195, 245, .95);
+}
 
 /* Petting hint */
 #pet-hint {
@@ -675,17 +631,17 @@ html, body {
       <linearGradient id="hg-innerShade" x1="6" y1="4" x2="64" y2="88" gradientUnits="userSpaceOnUse">
         <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
         <stop offset=".42" stop-color="#ffffff" stop-opacity="0"/>
-        <stop offset=".78" stop-color="#5a5a5a" stop-opacity=".24"/>
-        <stop offset="1" stop-color="#3a3a3a" stop-opacity=".32"/>
+        <stop offset=".78" stop-color="#5a5a5a" stop-opacity=".08"/>
+        <stop offset="1" stop-color="#3a3a3a" stop-opacity=".12"/>
       </linearGradient>
       <filter id="hg-cast" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
         <feGaussianBlur in="SourceAlpha" stdDeviation="4.2" result="b2"/>
         <feOffset in="b2" dx="2.5" dy="6" result="o2"/>
-        <feFlood flood-color="#2c2c2c" flood-opacity=".20"/>
+        <feFlood flood-color="#2c2c2c" flood-opacity=".07"/>
         <feComposite operator="in" in2="o2" result="s2"/>
         <feGaussianBlur in="SourceAlpha" stdDeviation="1.6" result="b1"/>
         <feOffset in="b1" dx="1.2" dy="3" result="o1"/>
-        <feFlood flood-color="#1a1a1a" flood-opacity=".28"/>
+        <feFlood flood-color="#1a1a1a" flood-opacity=".10"/>
         <feComposite operator="in" in2="o1" result="s1"/>
         <feMerge>
           <feMergeNode in="s2"/>
@@ -697,7 +653,7 @@ html, body {
         <ellipse cx="38" cy="46" rx="33" ry="44" fill="#fff"/>
       </mask>
     </defs>
-    <ellipse cx="37" cy="89" rx="16" ry="4" fill="#2a2a2a" opacity=".09"/>
+    <ellipse cx="37" cy="89" rx="16" ry="4" fill="#2a2a2a" opacity=".03"/>
     <g filter="url(#hg-cast)">
       <ellipse cx="36" cy="83" rx="15" ry="6" fill="url(#hg-glove)"/>
       <path fill="url(#hg-finger)" d="M 55.2 49 L 53.5 29 Q 53 21 58 19 Q 63 21 62.2 30 L 59.5 49 Z"/>
@@ -749,24 +705,14 @@ html, body {
     <span class="hud-stat">총 <strong id="hud-total">0</strong></span>
   </div>
 
-  <!-- Detail Panel: 우측 사이드 -->
+  <!-- Detail Panel: 우측 콤팩트 -->
   <div id="detail-panel" class="hidden">
-    <div class="dp-bar-top">
-      <div class="dp-bar-identity">
-        <div id="dp-node-badge"><div id="dp-dot"></div><span id="dp-type-text">카테고리</span></div>
-        <div id="dp-parent-row" class="hidden"><div id="dp-parent-dot"></div><span id="dp-parent-text"></span></div>
-      </div>
+    <div class="dp-stack">
+      <div id="dp-category-label"></div>
       <div id="detail-text"></div>
-    </div>
-    <div class="dp-bar-meta">
       <div id="dp-stage-info"></div>
-      <div id="dp-children-info" class="hidden"></div>
-    </div>
-    <div id="ai-message" class="ai-msg"></div>
-    <div class="dp-bar-actions">
-      <button id="release-ready-btn">🕊️ 우주로 보내기</button>
-      <button class="btn-add-child" id="add-child-btn" style="display:none">＋ 세부 관념 추가</button>
-      <button class="btn-dp-close" id="close-panel-btn">닫기</button>
+      <div id="ai-message" class="ai-msg"></div>
+      <button type="button" class="btn-dp-close" id="close-panel-btn">닫기</button>
     </div>
   </div>
 
@@ -786,7 +732,7 @@ html, body {
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
 <div id="toast"></div>
 
-<p id="creator-credit"><a href="detail-panel-options.html">상세 시안</a><span aria-hidden="true"> · </span><a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
+<p id="creator-credit"><a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
 
 <!-- Feedback button -->
 <button id="feedback-btn">피드백</button>
@@ -1256,61 +1202,46 @@ function getNodeAt(cx, cy){
 let selectedNode = null;
 let hoveredNode  = null;
 
+function formatCategoryPurifiedCount(catNode){
+  const total=nodes.filter(n=>n.userData.parentId===catNode.userData.id);
+  const active=nodes.filter(n=>n.userData.parentId===catNode.userData.id&&!n.userData.purified);
+  const purified=total.length-active.length;
+  return `${purified}/${total.length} ✋`;
+}
+
 function selectNode(node){
   if(selectedNode&&selectedNode!==node){ selectedNode.scale.setScalar(1); selectedNode.material.emissiveIntensity=1; }
   selectedNode=node;
   node.scale.setScalar(1.15); node.material.emissiveIntensity=2.2;
 
-  const p=pal(node.userData.cIdx);
-  const dotCss=`background:rgb(${p.r},${p.g},${p.b});width:8px;height:8px;border-radius:50%`;
-  document.getElementById('dp-dot').style.cssText=dotCss;
-  document.getElementById('dp-type-text').textContent=node.userData.isCategory?'카테고리':'세부 관념';
+  if(node.userData.isCategory && node.userData.readyForRelease){
+    showReleasePopup(node);
+    document.getElementById('detail-panel').classList.add('hidden');
+    return;
+  }
 
-  // Parent row
-  const parentRow=document.getElementById('dp-parent-row');
-  if(!node.userData.isCategory&&node.userData.parentId){
+  const catLab=document.getElementById('dp-category-label');
+  if(node.userData.isCategory){
+    catLab.textContent='카테고리';
+  } else if(node.userData.parentId){
     const par=nodes.find(n=>n.userData.id===node.userData.parentId);
-    if(par){
-      const pp=pal(par.userData.cIdx);
-      document.getElementById('dp-parent-dot').style.cssText=`background:rgb(${pp.r},${pp.g},${pp.b});width:7px;height:7px;border-radius:50%`;
-      document.getElementById('dp-parent-text').textContent='↳ '+par.userData.text;
-      parentRow.classList.remove('hidden');
-    } else parentRow.classList.add('hidden');
-  } else parentRow.classList.add('hidden');
+    catLab.textContent=par?par.userData.text:'—';
+  } else {
+    catLab.textContent='—';
+  }
 
   document.getElementById('detail-text').textContent='"'+node.userData.text+'"';
 
-  // Stage info
-  const needed=node.userData.stages*10;
   const done=node.userData.strokeCount;
   const stageEl=document.getElementById('dp-stage-info');
   if(node.userData.isCategory){
-    stageEl.textContent='구슬을 쓰다듬어 세부 관념을 정화해주세요';
+    stageEl.textContent=formatCategoryPurifiedCount(node);
   } else {
     const curStage=Math.floor(done/10)+1;
-    stageEl.textContent=`정화 단계: ${curStage}/${node.userData.stages} · ${done%10}/10 ✋`;
+    stageEl.textContent=`정화 단계 ${curStage}/${node.userData.stages} · ${done%10}/10 ✋`;
   }
 
-  // Children info
-  const kidsEl=document.getElementById('dp-children-info');
-  if(node.userData.isCategory){
-    const kids=nodes.filter(n=>n.userData.parentId===node.userData.id&&!n.userData.purified);
-    const total=nodes.filter(n=>n.userData.parentId===node.userData.id);
-    if(total.length>0){
-      const purified=total.length-kids.length;
-      kidsEl.textContent=`세부 관념: ${purified}/${total.length} 정화됨`;
-      kidsEl.classList.remove('hidden');
-    } else kidsEl.classList.add('hidden');
-  } else kidsEl.classList.add('hidden');
-
-  // AI message
-  document.getElementById('ai-message').textContent='💭 '+PURIFY_MSGS[Math.floor(Math.random()*PURIFY_MSGS.length)];
-
-  // Release button (category ready for release)
-  document.getElementById('release-ready-btn').style.display = node.userData.readyForRelease ? '' : 'none';
-
-  // Add child button (category only)
-  document.getElementById('add-child-btn').style.display = node.userData.isCategory ? '' : 'none';
+  document.getElementById('ai-message').textContent=PURIFY_MSGS[Math.floor(Math.random()*PURIFY_MSGS.length)];
 
   document.getElementById('detail-panel').classList.remove('hidden');
 }
@@ -1355,7 +1286,7 @@ function movePet(cx, cy){
 
 function applyStroke(node){
   if(!node||node.userData.purified||node.userData.purifyingAnim) return;
-  if(node.userData.isCategory){ showToast('세부 관념 구슬을 쓰다듬어 주세요'); return; }
+  if(node.userData.isCategory){ showToast('작은 구슬을 쓰다듬어 주세요'); return; }
 
   node.userData.strokeCount++;
 
@@ -1365,7 +1296,7 @@ function applyStroke(node){
     const done=node.userData.strokeCount;
     const curStage=Math.floor(done/10)+1;
     document.getElementById('dp-stage-info').textContent=
-      `정화 단계: ${curStage}/${node.userData.stages} · ${done%10}/10 ✋`;
+      `정화 단계 ${curStage}/${node.userData.stages} · ${done%10}/10 ✋`;
   }
 
   // Color shift toward white as progress builds
@@ -1483,20 +1414,8 @@ document.getElementById('release-confirm-btn').addEventListener('click',()=>{
 document.getElementById('release-cancel-btn').addEventListener('click',()=>{
   document.getElementById('release-overlay').classList.remove('show');
   if(pendingRelease){
-    // Mark as ready, show button in detail panel
     pendingRelease.userData.readyForRelease=true;
-    if(selectedNode===pendingRelease) document.getElementById('release-ready-btn').style.display='';
     pendingRelease=null;
-  }
-});
-
-document.getElementById('release-ready-btn').addEventListener('click',()=>{
-  if(selectedNode&&selectedNode.userData.readyForRelease){
-    deselectNode();
-    const node=selectedNode||pendingRelease;
-    // re-find
-    const cat=nodes.find(n=>n.userData.readyForRelease&&n.userData.isCategory);
-    if(cat) releaseUpward(cat);
   }
 });
 
@@ -1792,18 +1711,6 @@ function enterSpace(){
     setTimeout(()=>hint.classList.remove('show'),3200);
   }
 }
-
-// Add child from detail panel
-document.getElementById('add-child-btn').addEventListener('click',()=>{
-  const par=selectedNode;
-  deselectNode();
-  // Quick inline add: open input, submit goes to par
-  document.getElementById('input-overlay').classList.remove('hidden');
-  document.getElementById('space-ui').classList.add('hidden');
-  thoughtInput.placeholder='이 카테고리에 세부 관념을 추가하세요...';
-  thoughtInput.focus();
-  thoughtInput.dataset.forcedParentId=par.userData.id;
-});
 
 // Override submit if forcedParentId
 const origSubmit=submitStream;
