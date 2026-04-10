@@ -244,26 +244,30 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dp-head {
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  padding: 0 1px 10px 1px;
-  margin: 0 -1px 2px -1px;
+  padding: 0 1px 5px 1px;
+  margin: 0 -1px 0 -1px;
   border-bottom: 1px solid rgba(120, 80, 180, .2);
+}
+
+.dp-head + #detail-text {
+  margin-top: -2px;
 }
 
 .dp-category-dot {
   flex-shrink: 0;
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  margin-top: 3px;
+  margin-top: 2px;
   background: #8866ff;
-  box-shadow: 0 0 10px rgba(136, 102, 255, .5);
+  box-shadow: 0 0 12px rgba(136, 102, 255, .55);
 }
 
 #dp-category-label {
@@ -301,16 +305,19 @@ html, body {
 }
 
 .ai-msg {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   font-style: normal;
-  color: rgba(230, 218, 255, .94);
-  padding: 6px 8px;
-  margin: 0;
-  line-height: 1.45;
-  border-left: 2px solid rgba(150, 110, 230, .4);
-  border-radius: 0 8px 8px 0;
-  background: rgba(52, 32, 95, .34);
+  color: #fff8fc;
+  padding: 11px 12px;
+  margin: 6px 2px;
+  line-height: 1.52;
+  border-radius: 10px;
+  border: 1px solid rgba(200, 165, 255, .28);
+  background: linear-gradient(160deg, rgba(95, 65, 145, .58), rgba(48, 30, 88, .52));
+  box-shadow:
+    0 0 24px rgba(140, 100, 220, .14),
+    inset 0 1px 0 rgba(255, 255, 255, .07);
   word-break: keep-all;
 }
 
@@ -738,8 +745,8 @@ html, body {
         <div id="dp-category-label"></div>
       </div>
       <div id="detail-text"></div>
-      <div id="dp-stage-info"></div>
       <div id="ai-message" class="ai-msg"></div>
+      <div id="dp-stage-info"></div>
       <button type="button" class="btn-dp-close" id="close-panel-btn">닫기</button>
     </div>
   </div>
@@ -1230,6 +1237,18 @@ function getNodeAt(cx, cy){
 let selectedNode = null;
 let hoveredNode  = null;
 
+function formatCategoryPurifiedCount(catNode){
+  const total=nodes.filter(n=>n.userData.parentId===catNode.userData.id);
+  const active=nodes.filter(n=>n.userData.parentId===catNode.userData.id&&!n.userData.purified);
+  const purified=total.length-active.length;
+  return `${purified}/${total.length} ✋`;
+}
+
+function formatThoughtPettingLine(node){
+  const d=node.userData.strokeCount%10;
+  return `${d}/10 ✋`;
+}
+
 function selectNode(node){
   if(selectedNode&&selectedNode!==node){ selectedNode.scale.setScalar(1); selectedNode.material.emissiveIntensity=1; }
   selectedNode=node;
@@ -1243,7 +1262,7 @@ function selectNode(node){
 
   const catLab=document.getElementById('dp-category-label');
   if(node.userData.isCategory){
-    catLab.textContent='카테고리';
+    catLab.textContent=node.userData.text;
   } else if(node.userData.parentId){
     const par=nodes.find(n=>n.userData.id===node.userData.parentId);
     catLab.textContent=par?par.userData.text:'—';
@@ -1263,14 +1282,11 @@ function selectNode(node){
 
   document.getElementById('detail-text').textContent='"'+node.userData.text+'"';
 
-  const done=node.userData.strokeCount;
   const stageEl=document.getElementById('dp-stage-info');
   if(node.userData.isCategory){
-    const subCount=nodes.filter(n=>n.userData.parentId===node.userData.id).length;
-    stageEl.textContent=`세부 관념 ${subCount}개`;
+    stageEl.textContent=formatCategoryPurifiedCount(node);
   } else {
-    const curStage=Math.floor(done/10)+1;
-    stageEl.textContent=`정화 단계 ${curStage}/${node.userData.stages} ✋`;
+    stageEl.textContent=formatThoughtPettingLine(node);
   }
 
   document.getElementById('ai-message').textContent=PURIFY_MSGS[Math.floor(Math.random()*PURIFY_MSGS.length)];
@@ -1324,11 +1340,7 @@ function applyStroke(node){
 
   // Update detail panel if visible
   if(selectedNode===node){
-    const needed=node.userData.stages*10;
-    const done=node.userData.strokeCount;
-    const curStage=Math.floor(done/10)+1;
-    document.getElementById('dp-stage-info').textContent=
-      `정화 단계 ${curStage}/${node.userData.stages} ✋`;
+    document.getElementById('dp-stage-info').textContent=formatThoughtPettingLine(node);
   }
 
   // Color shift toward white as progress builds
