@@ -384,6 +384,25 @@ html, body {
 }
 #feedback-btn:hover { color: rgba(180,150,255,.7); }
 
+#creator-credit {
+  position: fixed;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  z-index: 105;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(130,110,190,.42);
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+#creator-credit a {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color .15s;
+}
+#creator-credit a:hover { color: rgba(180,160,255,.72); }
+
 #feedback-overlay {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
@@ -590,6 +609,8 @@ html, body {
 
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
 <div id="toast"></div>
+
+<p id="creator-credit">만든 사람 <a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
 
 <!-- Feedback button -->
 <button id="feedback-btn">피드백</button>
