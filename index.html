@@ -1140,8 +1140,8 @@ html, body {
 <div id="goal-overlay">
   <div class="goal-card">
     <span class="goal-emoji">🌟</span>
-    <div class="goal-title">오늘 목표 달성!</div>
-    <div class="goal-body">오늘 3개의 관념을 정화했습니다.<br>마음이 조금 더 가벼워졌길 바랍니다 💜</div>
+    <div class="goal-title">축하해요!</div>
+    <div class="goal-body">오늘 3개의 관념을 정화했습니다.<br>마음이 조금 더 가벼워졌길 바랍니다 🤍</div>
     <button class="btn-goal-continue" id="goal-continue-btn">계속 정화하기</button>
   </div>
 </div>
@@ -1451,14 +1451,32 @@ function countActiveMarbles(){
   return nodes.filter(n=>!n.userData.purified).length;
 }
 
-/** 구슬·궤도 거리만 키움 (연결선 렌더와 무관) */
-const MARBLE_SPACING_MUL = 1.22;
-
 function marbleLayoutScale(){
   const n = Math.max(1, countActiveMarbles());
   const ref = 11;
   const raw = Math.sqrt(n / ref);
   return Math.min(2.55, Math.max(0.93, raw));
+}
+
+/** 루트 카테고리: 전체 구슬 수(d)에 덜 민감하게 — 한 덩이만 과도하게 멀어지는 완화 */
+function rootLayoutDamp(dTotal){
+  return 0.84 + 0.36 * Math.min(dTotal, 1.68);
+}
+
+function rootShellRadius(nRoots, spread, dTotal){
+  const n = Math.max(1, nRoots);
+  const dR = rootLayoutDamp(dTotal);
+  return (6.5 + 4.9 * Math.pow(n, 0.34)) * spread * dR;
+}
+
+/** 균일에 가깝게: 피보나치 구면 방향 (나선 반지름 누적 제거) */
+function rootFibUnitDir(idx, n){
+  if(n <= 1) return { x: 0, y: 1, z: 0 };
+  const t = idx + 0.5;
+  const yy = 1 - 2 * t / n;
+  const rr = Math.sqrt(Math.max(0, 1 - yy * yy));
+  const theta = CHILD_ORBIT_GOLD * idx;
+  return { x: rr * Math.cos(theta), y: yy, z: rr * Math.sin(theta) };
 }
 
 function childOrbitOffset(siblingIndex){
@@ -1468,11 +1486,11 @@ function childOrbitOffset(siblingIndex){
   const d = marbleLayoutScale();
   const baseR = 3.95 * spread * d;
   const stepR = 1.34 * spread * d;
-  const r = baseR + Math.sqrt(i + 1) * stepR;
+  const rMax = baseR + stepR * 8.1;
+  const r = Math.min(baseR + Math.sqrt(i + 1) * stepR, rMax);
   const ang = i * CHILD_ORBIT_GOLD;
   const y = Math.sin(i * 1.73) * (2.35 * spread * d);
-  const v = new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r);
-  return v.multiplyScalar(MARBLE_SPACING_MUL);
+  return new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r);
 }
 
 function spawnPos(isCategory, parentMesh, siblingIndex){
@@ -1484,14 +1502,18 @@ function spawnPos(isCategory, parentMesh, siblingIndex){
   const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
   const spread = narrow ? 1.22 : 1;
   const d = marbleLayoutScale();
-  const ga = Math.PI*(3-Math.sqrt(5));
-  const i = nodes.filter(n=>n.userData.isCategory).length+1;
-  const mul = MARBLE_SPACING_MUL;
-  const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d * mul;
-  const th = i * ga;
-  const yBand = Math.sin(i * 2.513) * (12 * spread * d) * mul;
-  const yJ = (Math.random() - 0.5) * 5.4 * Math.min(1.32, d) * mul;
-  return new THREE.Vector3(Math.cos(th) * r, yBand + yJ, Math.sin(th) * r);
+  const nRoots = nodes.filter(n=>n.userData.isCategory && !n.userData.purified).length + 1;
+  const idx = nRoots - 1;
+  const dir = rootFibUnitDir(idx, nRoots);
+  const R = rootShellRadius(nRoots, spread, d);
+  const jit = 0.5 * Math.min(1.2, d);
+  const jAng = Math.random() * Math.PI * 2;
+  const yJ = (Math.random() - 0.5) * 2.5 * Math.min(1.12, d);
+  return new THREE.Vector3(
+    dir.x * R + Math.cos(jAng) * jit,
+    dir.y * R + yJ,
+    dir.z * R + Math.sin(jAng) * jit
+  );
 }
 
 function reflowRootCategorySpiral(t){
@@ -1504,19 +1526,16 @@ function reflowRootCategorySpiral(t){
   ).sort((a,b)=>a.userData.id-b.userData.id);
   if(!roots.length) return;
   const d = marbleLayoutScale();
-  const ga = Math.PI*(3-Math.sqrt(5));
+  const n = roots.length;
+  const R = rootShellRadius(n, spread, d);
   roots.forEach((node, idx)=>{
-    const i = idx + 1;
-    const mul = MARBLE_SPACING_MUL;
-    const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d * mul;
-    const th = i * ga;
-    const yBand = Math.sin(i * 2.513) * (12 * spread * d) * mul;
+    const dir = rootFibUnitDir(idx, n);
     const childCount = nodes.filter(n=>n.userData.parentId===node.userData.id&&!n.userData.purified).length;
     const gravityY = -Math.min(11, childCount*0.42);
     const bob = Math.sin(tt*node.userData.floatSpd+node.userData.floatOff)*0.45;
-    node.position.x = Math.cos(th)*r;
-    node.position.z = Math.sin(th)*r;
-    node.userData.originY = yBand - gravityY - bob;
+    node.position.x = dir.x * R;
+    node.position.z = dir.z * R;
+    node.userData.originY = dir.y * R - gravityY - bob;
   });
 }
 
