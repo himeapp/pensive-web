@@ -1451,6 +1451,9 @@ function countActiveMarbles(){
   return nodes.filter(n=>!n.userData.purified).length;
 }
 
+/** 구슬·궤도 거리만 키움 (연결선 렌더와 무관) */
+const MARBLE_SPACING_MUL = 1.22;
+
 function marbleLayoutScale(){
   const n = Math.max(1, countActiveMarbles());
   const ref = 11;
@@ -1468,7 +1471,8 @@ function childOrbitOffset(siblingIndex){
   const r = baseR + Math.sqrt(i + 1) * stepR;
   const ang = i * CHILD_ORBIT_GOLD;
   const y = Math.sin(i * 1.73) * (2.35 * spread * d);
-  return new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r);
+  const v = new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r);
+  return v.multiplyScalar(MARBLE_SPACING_MUL);
 }
 
 function spawnPos(isCategory, parentMesh, siblingIndex){
@@ -1482,10 +1486,11 @@ function spawnPos(isCategory, parentMesh, siblingIndex){
   const d = marbleLayoutScale();
   const ga = Math.PI*(3-Math.sqrt(5));
   const i = nodes.filter(n=>n.userData.isCategory).length+1;
-  const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d;
+  const mul = MARBLE_SPACING_MUL;
+  const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d * mul;
   const th = i * ga;
-  const yBand = Math.sin(i * 2.513) * (12 * spread * d);
-  const yJ = (Math.random() - 0.5) * 5.4 * Math.min(1.32, d);
+  const yBand = Math.sin(i * 2.513) * (12 * spread * d) * mul;
+  const yJ = (Math.random() - 0.5) * 5.4 * Math.min(1.32, d) * mul;
   return new THREE.Vector3(Math.cos(th) * r, yBand + yJ, Math.sin(th) * r);
 }
 
@@ -1502,9 +1507,10 @@ function reflowRootCategorySpiral(t){
   const ga = Math.PI*(3-Math.sqrt(5));
   roots.forEach((node, idx)=>{
     const i = idx + 1;
-    const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d;
+    const mul = MARBLE_SPACING_MUL;
+    const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d * mul;
     const th = i * ga;
-    const yBand = Math.sin(i * 2.513) * (12 * spread * d);
+    const yBand = Math.sin(i * 2.513) * (12 * spread * d) * mul;
     const childCount = nodes.filter(n=>n.userData.parentId===node.userData.id&&!n.userData.purified).length;
     const gravityY = -Math.min(11, childCount*0.42);
     const bob = Math.sin(tt*node.userData.floatSpd+node.userData.floatOff)*0.45;
