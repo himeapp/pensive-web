@@ -1443,15 +1443,28 @@ function makeMesh(isCategory, cIdx){
 }
 
 const CHILD_ORBIT_GOLD = Math.PI * (3 - Math.sqrt(5));
+
+function countActiveMarbles(){
+  return nodes.filter(n=>!n.userData.purified).length;
+}
+
+function marbleLayoutScale(){
+  const n = Math.max(1, countActiveMarbles());
+  const ref = 14;
+  const raw = Math.sqrt(n / ref);
+  return Math.min(2.15, Math.max(0.88, raw));
+}
+
 function childOrbitOffset(siblingIndex){
   const i = Math.max(0, siblingIndex | 0);
   const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
   const spread = narrow ? 1.2 : 1;
-  const baseR = 3.15 * spread;
-  const stepR = 1.05 * spread;
+  const d = marbleLayoutScale();
+  const baseR = 3.15 * spread * d;
+  const stepR = 1.05 * spread * d;
   const r = baseR + Math.sqrt(i + 1) * stepR;
   const ang = i * CHILD_ORBIT_GOLD;
-  const y = Math.sin(i * 1.73) * (1.85 * spread);
+  const y = Math.sin(i * 1.73) * (1.85 * spread * d);
   return new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r);
 }
 
@@ -1463,12 +1476,14 @@ function spawnPos(isCategory, parentMesh, siblingIndex){
   }
   const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
   const spread = narrow ? 1.22 : 1;
+  const d = marbleLayoutScale();
   const ga = Math.PI*(3-Math.sqrt(5));
   const i = nodes.filter(n=>n.userData.isCategory).length+1;
-  const r = (7.8 + Math.sqrt(i) * 5.4) * spread;
+  const r = (7.8 + Math.sqrt(i) * 5.4) * spread * d;
   const th = i * ga;
-  const yBand = Math.sin(i * 2.513) * (9.5 * spread);
-  return new THREE.Vector3(Math.cos(th) * r, yBand + (Math.random() - 0.5) * 4, Math.sin(th) * r);
+  const yBand = Math.sin(i * 2.513) * (9.5 * spread * d);
+  const yJ = (Math.random() - 0.5) * 4 * Math.min(1.2, d);
+  return new THREE.Vector3(Math.cos(th) * r, yBand + yJ, Math.sin(th) * r);
 }
 
 function reflowChildOrbitsAroundParents(elapsed){
