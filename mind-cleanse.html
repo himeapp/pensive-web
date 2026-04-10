@@ -37,8 +37,8 @@ html, body {
 #hand-cursor {
   position: fixed; pointer-events: none; z-index: 9999;
   display: none;
-  transform: translate(-24px, -5px); /* hotspot: index fingertip */
-  filter: drop-shadow(2px 8px 18px rgba(0,0,0,.28)) drop-shadow(0 1px 2px rgba(255,255,255,.35));
+  transform: translate(-23px, -3px); /* hotspot: index fingertip */
+  /* 입체·그림자는 SVG 필터·내부 그라데이션으로 처리 */
   transition: opacity .12s;
 }
 #hand-cursor.show { display: block; }
@@ -46,10 +46,10 @@ html, body {
 
 /* idle: very subtle organic float — breathing-like, not mechanical */
 @keyframes hand-idle {
-  0%   { transform: translate(-24px,-7px) rotate(-3deg); }
-  30%  { transform: translate(-24px, -4px) rotate( 2deg); }
-  65%  { transform: translate(-24px, -8px) rotate(-1deg); }
-  100% { transform: translate(-24px, -7px) rotate(-3deg); }
+  0%   { transform: translate(-23px,-5px) rotate(-3deg); }
+  30%  { transform: translate(-23px, -2px) rotate( 2deg); }
+  65%  { transform: translate(-23px, -6px) rotate(-1deg); }
+  100% { transform: translate(-23px, -5px) rotate(-3deg); }
 }
 #hand-cursor.idle    { animation: hand-idle 3.8s ease-in-out infinite; }
 /* petting rotation is driven by JS (velocity-based) — no CSS needed */
@@ -70,7 +70,13 @@ html, body {
 /* ==================== INPUT OVERLAY ==================== */
 #input-overlay {
   position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
   z-index: 100;
   background: radial-gradient(ellipse at center, rgba(20,0,60,.97) 0%, rgba(0,0,17,.99) 100%);
   transition: opacity .6s, visibility .6s;
@@ -79,6 +85,8 @@ html, body {
 
 .input-card {
   width: 92%; max-width: 560px;
+  flex-shrink: 0;
+  margin-top: auto; margin-bottom: auto;
   background: rgba(10,5,30,.92);
   border: 1px solid rgba(120,60,255,.3);
   border-radius: 24px;
@@ -111,7 +119,12 @@ html, body {
   resize: vertical; outline: none;
   transition: border-color .2s, box-shadow .2s;
 }
-#thought-input::placeholder { color: rgba(160,140,210,.3); }
+#thought-input::placeholder {
+  color: rgba(160,140,210,.3);
+  font-size: 13px;
+  line-height: 1.65;
+  opacity: 1;
+}
 #thought-input:focus {
   border-color: rgba(140,80,255,.55);
   box-shadow: 0 0 24px rgba(120,60,255,.14);
@@ -146,6 +159,56 @@ html, body {
 #enter-space-btn { display: none; }
 #enter-space-btn.visible { display: block; }
 
+/* ==================== PENSIEVE ENTRY (loading vignette) ==================== */
+#pensieve-entry {
+  position: fixed; inset: 0; z-index: 95;
+  pointer-events: none;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.45s ease, visibility 0.45s;
+}
+#pensieve-entry.show {
+  opacity: 1; visibility: visible;
+}
+#pensieve-canvas {
+  position: absolute; left: 0; top: 0;
+  display: block; width: 100%; height: 100%;
+  z-index: 0;
+}
+#pensieve-entry .pensieve-vignette {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse 92% 75% at 50% 42%, transparent 28%, rgba(3,3,14,.62) 100%);
+}
+#pensieve-entry .pensieve-thread-svg-wrap {
+  position: absolute; inset: 0; z-index: 2;
+  pointer-events: none;
+}
+#pensieve-entry .pensieve-thread-svg-wrap svg {
+  display: block; width: 100%; height: 100%;
+}
+#pensieve-entry .pensieve-glove-wrap {
+  position: absolute;
+  right: max(-2%, env(safe-area-inset-right, 0px));
+  bottom: max(0, env(safe-area-inset-bottom, 0px));
+  width: min(28vw, 188px);
+  z-index: 3;
+  pointer-events: none;
+  transform-origin: 92% 96%;
+  filter: drop-shadow(-4px 16px 32px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(200,220,255,.15));
+  will-change: transform;
+}
+#pensieve-entry .pensieve-glove-wrap svg { display: block; width: 100%; height: auto; }
+#pensieve-entry .pensieve-caption {
+  position: absolute;
+  left: 50%; bottom: max(10%, env(safe-area-inset-bottom, 12px));
+  transform: translateX(-50%);
+  font-size: 13px; font-weight: 400;
+  color: rgba(185, 210, 255, 0.55);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 24px rgba(80, 140, 255, 0.35);
+  white-space: nowrap;
+  z-index: 4;
+}
+
 /* ==================== SPACE UI ==================== */
 #space-ui {
   position: fixed; inset: 0; pointer-events: none; z-index: 20; transition: opacity .6s;
@@ -172,80 +235,159 @@ html, body {
 .hud-bar { width: 72px; height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
 .hud-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#7733ff,#cc88ff); border-radius: 3px; transition: width .5s ease; }
 
-/* ==================== DETAIL PANEL ==================== */
-#detail-panel {
-  position: absolute; right: 22px; top: 50%; transform: translateY(-50%);
-  width: 256px;
-  background: rgba(8,4,24,.92);
-  border: 1px solid rgba(120,70,220,.28);
-  border-radius: 20px; padding: 22px;
-  backdrop-filter: blur(22px); box-shadow: 0 0 40px rgba(80,0,200,.18);
-  pointer-events: auto;
-  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+/* 모바일: 상단 HUD가 우측 구글 로그인과 가로로 겹치지 않도록 영역 분리 */
+@media (max-width: 560px) {
+  #hud-top {
+    left: max(10px, env(safe-area-inset-left, 0px));
+    right: calc(max(10px, env(safe-area-inset-right, 0px)) + min(54vw, 220px));
+    transform: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    white-space: normal;
+    row-gap: 6px;
+    column-gap: 8px;
+    padding: 8px 12px;
+    border-radius: 22px;
+    box-sizing: border-box;
+  }
+  #hud-title { font-size: 11px; letter-spacing: 0.2px; }
+  .hud-stat { font-size: 10px; }
+  .hud-bar { width: 52px; }
+  .hud-div { height: 14px; }
 }
-#detail-panel.hidden { opacity: 0; visibility: hidden; transform: translateY(-50%) translateX(16px); }
+
+/* ==================== DETAIL PANEL (FAB 위 가로 바) ==================== */
+#detail-panel {
+  position: absolute;
+  left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 20px));
+  z-index: 25;
+  background: rgba(6, 2, 18, .94);
+  border: 1px solid rgba(130, 80, 230, .35);
+  border-radius: 18px;
+  padding: 12px 14px 12px;
+  backdrop-filter: blur(22px);
+  box-shadow: 0 -8px 40px rgba(60, 0, 140, .35), 0 0 1px rgba(200, 180, 255, .2);
+  pointer-events: auto;
+  transition: opacity .28s ease, transform .32s cubic-bezier(.34, 1.2, .64, 1), visibility .32s;
+}
+#detail-panel.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(14px);
+}
+
+.dp-bar-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.dp-bar-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex-shrink: 0;
+}
 
 #dp-node-badge {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 11px; font-weight: 700;
-  padding: 3px 10px; border-radius: 20px; margin-bottom: 11px;
+  padding: 3px 10px; border-radius: 20px; margin-bottom: 0;
 }
 #dp-dot { width: 8px; height: 8px; border-radius: 50%; }
 #dp-parent-row {
   font-size: 11px; color: rgba(160,140,210,.6);
-  margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+  margin-bottom: 0; display: flex; align-items: center; gap: 5px;
+  max-width: 42vw;
 }
 #dp-parent-row.hidden { display: none; }
-#dp-parent-dot { width: 7px; height: 7px; border-radius: 50%; }
+#dp-parent-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
-#detail-text { font-size: 15px; font-weight: 500; color: #e8e0ff; line-height: 1.6; margin-bottom: 12px; word-break: keep-all; }
+#detail-text {
+  font-size: 14px; font-weight: 500; color: #ebe4ff;
+  line-height: 1.55;
+  margin-bottom: 0;
+  word-break: keep-all;
+  flex: 1;
+  min-width: min(100%, 200px);
+}
+
+.dp-bar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 8px;
+}
 
 #dp-stage-info {
-  font-size: 12px; border-radius: 8px; padding: 7px 10px; margin-bottom: 11px;
-  background: rgba(120,60,220,.15); color: rgba(200,180,240,.8);
+  font-size: 11px; border-radius: 10px; padding: 6px 10px; margin-bottom: 0;
+  background: rgba(120,60,220,.15); color: rgba(200,180,240,.85);
   border-left: 2px solid rgba(150,80,255,.5);
+  flex: 1 1 140px;
+  min-width: 0;
 }
 #dp-children-info {
-  font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-bottom: 10px;
-  background: rgba(60,30,100,.25); color: rgba(180,160,230,.7);
+  font-size: 11px; padding: 6px 10px; border-radius: 10px; margin-bottom: 0;
+  background: rgba(60,30,100,.28); color: rgba(180,160,230,.75);
+  flex: 0 1 auto;
 }
 #dp-children-info.hidden { display: none; }
 
 .ai-msg {
-  font-size: 12px; color: rgba(160,140,220,.65);
-  padding: 7px 10px; margin-bottom: 14px;
-  line-height: 1.5; font-style: italic;
-  border-left: 2px solid rgba(120,60,220,.4);
+  font-size: 11px; color: rgba(160,140,220,.62);
+  padding: 6px 10px; margin-bottom: 8px;
+  line-height: 1.45; font-style: italic;
+  border-left: 2px solid rgba(120,60,220,.35);
+  border-radius: 0 8px 8px 0;
+  background: rgba(40, 20, 80, .2);
+}
+
+.dp-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .btn-add-child {
-  width: 100%; padding: 9px;
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 9px 12px;
   background: rgba(80,40,140,.25); border: 1px solid rgba(120,80,220,.35);
   border-radius: 10px; color: rgba(180,150,255,.85);
-  font-family: 'Noto Sans KR', sans-serif; font-size: 13px;
-  cursor: pointer; transition: all .2s; margin-bottom: 7px;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 12px;
+  cursor: pointer; transition: all .2s; margin-bottom: 0;
 }
 .btn-add-child:hover { background: rgba(100,50,180,.35); }
 
 /* Release button (appears when ready to release parent) */
 #release-ready-btn {
-  width: 100%; padding: 10px;
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 9px 12px;
   background: linear-gradient(135deg, rgba(255,200,50,.2), rgba(255,150,20,.15));
   border: 1px solid rgba(255,180,40,.4); border-radius: 10px;
   color: rgba(255,200,80,.9);
-  font-family: 'Noto Sans KR', sans-serif; font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: all .2s; margin-bottom: 7px; display: none;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all .2s; margin-bottom: 0; display: none;
 }
 #release-ready-btn:hover { background: linear-gradient(135deg, rgba(255,200,50,.3), rgba(255,150,20,.25)); }
 
 .btn-dp-close {
-  width: 100%; padding: 8px;
-  background: transparent; border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px; color: rgba(180,160,210,.45);
-  font-family: 'Noto Sans KR', sans-serif; font-size: 13px;
+  flex: 0 0 auto;
+  padding: 9px 18px;
+  background: transparent; border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; color: rgba(180,160,210,.5);
+  font-family: 'Noto Sans KR', sans-serif; font-size: 12px;
   cursor: pointer; transition: all .2s;
 }
-.btn-dp-close:hover { background: rgba(255,255,255,.05); color: rgba(200,185,235,.7); }
+.btn-dp-close:hover { background: rgba(255,255,255,.06); color: rgba(200,185,235,.75); }
 
 /* Petting hint */
 #pet-hint {
@@ -262,6 +404,7 @@ html, body {
 /* FAB */
 #add-fab {
   position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+  z-index: 24;
   pointer-events: auto; padding: 12px 28px;
   background: rgba(0,0,12,.82); border: 1px solid rgba(120,70,255,.45);
   border-radius: 30px; color: rgba(180,150,255,.9);
@@ -377,21 +520,21 @@ html, body {
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   left: calc(18px + env(safe-area-inset-left, 0px));
   z-index: 60;
-  background: rgba(120,80,230,.52);
-  border: 1px solid rgba(200,170,255,.78);
-  border-radius: 20px;
+  background: rgba(40,30,70,.25);
+  border: 1px solid rgba(140,130,195,.22);
+  border-radius: 16px;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; font-weight: 600;
-  color: #fff;
-  padding: 7px 15px;
+  font-size: 11px; font-weight: 500;
+  color: rgba(160,150,210,.55);
+  padding: 5px 11px;
   transition: background .2s, color .2s, border-color .2s;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(6px);
 }
 #feedback-btn:hover {
-  background: rgba(150,100,255,.62);
-  border-color: rgba(230,210,255,.92);
-  color: #fff;
+  background: rgba(60,45,100,.32);
+  border-color: rgba(160,150,220,.35);
+  color: rgba(190,180,235,.75);
 }
 
 #creator-credit {
@@ -444,7 +587,12 @@ html, body {
   transition: border-color .2s;
 }
 #feedback-text:focus { border-color: rgba(140,80,255,.5); }
-#feedback-text::placeholder { color: rgba(160,140,210,.3); }
+#feedback-text::placeholder {
+  color: rgba(160,140,210,.3);
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 1;
+}
 .feedback-actions { display: flex; gap: 8px; margin-top: 14px; }
 #feedback-submit {
   flex: 1; padding: 10px;
@@ -517,6 +665,58 @@ html, body {
 <body>
 
 <canvas id="three-canvas"></canvas>
+<div id="pensieve-entry" aria-hidden="true">
+  <canvas id="pensieve-canvas"></canvas>
+  <div class="pensieve-vignette" aria-hidden="true"></div>
+  <div class="pensieve-thread-svg-wrap" aria-hidden="true">
+    <svg id="pensieve-thread-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="ps-thread-glow-mc" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <polyline id="pensieve-thread-line" fill="none" stroke="#eaf4ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#ps-thread-glow-mc)" opacity="0"/>
+    </svg>
+  </div>
+  <div id="pensieve-glove-wrap" class="pensieve-glove-wrap" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 92" aria-hidden="true">
+      <defs>
+        <linearGradient id="pg-glove-mc" x1="4" y1="2" x2="68" y2="90" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".35" stop-color="#f6f7fb"/>
+          <stop offset=".75" stop-color="#e8ecf5"/>
+          <stop offset="1" stop-color="#d4dae8"/>
+        </linearGradient>
+        <linearGradient id="pg-finger-mc" x1="2" y1="0" x2="70" y2="88" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".55" stop-color="#eef1f8"/>
+          <stop offset="1" stop-color="#cfd6e8"/>
+        </linearGradient>
+        <linearGradient id="pg-ridge-mc" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#dde2ee"/>
+          <stop offset=".5" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#c8cfdf"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="36" cy="88" rx="17" ry="4.5" fill="#000" opacity=".12"/>
+      <ellipse cx="36" cy="83" rx="15" ry="6" fill="url(#pg-glove-mc)"/>
+      <path fill="url(#pg-finger-mc)" d="M 55.2 49 L 53.5 29 Q 53 21 58 19 Q 63 21 62.2 30 L 59.5 49 Z"/>
+      <path fill="url(#pg-finger-mc)" d="M 43.2 47 L 43.2 23 Q 43.2 14 49 12 Q 54.8 14 54.8 23 L 54.8 47 Z"/>
+      <path fill="url(#pg-finger-mc)" d="M 29.2 47 L 29.2 18 Q 29.2 9 36 7 Q 42.8 9 42.8 18 L 42.8 47 Z"/>
+      <path fill="url(#pg-finger-mc)" d="M 15.8 47 L 15.8 14 Q 15.8 5 22.5 3 Q 29.2 5 29.2 14 L 29.2 47 Z"/>
+      <ellipse cx="38" cy="57" rx="26" ry="21.5" fill="url(#pg-glove-mc)"/>
+      <path fill="url(#pg-finger-mc)" d="M 3.5 56 Q 1.5 46 7 40 Q 12.5 33 19 38 Q 23 44 21 52 Q 17 58 11 58 Q 5.5 58 3.5 56 Z"/>
+      <path fill="none" stroke="url(#pg-ridge-mc)" stroke-width="1.6" stroke-linecap="round" opacity=".5" d="M 26 44 Q 27 52 26 60"/>
+      <path fill="none" stroke="url(#pg-ridge-mc)" stroke-width="1.6" stroke-linecap="round" opacity=".5" d="M 37 42 Q 38 51 37 59"/>
+      <path fill="none" stroke="url(#pg-ridge-mc)" stroke-width="1.6" stroke-linecap="round" opacity=".5" d="M 48 44 Q 49 52 48 60"/>
+    </svg>
+  </div>
+  <p class="pensieve-caption">머리에서 이어진 빛을 우물에 풀어놓는 중…</p>
+</div>
 <div id="labels-container"></div>
 
 <!-- ======= GOOGLE AUTH ======= -->
@@ -543,45 +743,64 @@ html, body {
 
 <!-- 3D cartoon glove pointer -->
 <div id="hand-cursor">
-  <svg xmlns="http://www.w3.org/2000/svg" width="76" height="92" viewBox="0 0 76 92" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" width="72" height="92" viewBox="0 0 72 92" aria-hidden="true">
     <defs>
-      <linearGradient id="hg-glove" x1="8" y1="4" x2="72" y2="90" gradientUnits="userSpaceOnUse">
+      <linearGradient id="hg-glove" x1="2" y1="0" x2="70" y2="92" gradientUnits="userSpaceOnUse">
         <stop offset="0" stop-color="#ffffff"/>
-        <stop offset=".42" stop-color="#f4f4f4"/>
-        <stop offset=".78" stop-color="#d6d6d6"/>
-        <stop offset="1" stop-color="#aeaeae"/>
+        <stop offset=".32" stop-color="#f6f6f6"/>
+        <stop offset=".62" stop-color="#c9c9c9"/>
+        <stop offset="1" stop-color="#7e7e7e"/>
       </linearGradient>
-      <linearGradient id="hg-finger" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="hg-finger" x1="0" y1="0" x2="68" y2="90" gradientUnits="userSpaceOnUse">
         <stop offset="0" stop-color="#ffffff"/>
-        <stop offset=".55" stop-color="#ececec"/>
-        <stop offset="1" stop-color="#b6b6b6"/>
+        <stop offset=".38" stop-color="#ededed"/>
+        <stop offset=".7" stop-color="#b8b8b8"/>
+        <stop offset="1" stop-color="#6f6f6f"/>
       </linearGradient>
-      <radialGradient id="hg-tip" cx="32%" cy="28%" r="65%">
-        <stop offset="0" stop-color="#ffffff"/>
-        <stop offset=".55" stop-color="#f0f0f0"/>
-        <stop offset="1" stop-color="#c9c9c9"/>
-      </radialGradient>
       <linearGradient id="hg-ridge" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#e8e8e8"/>
-        <stop offset=".45" stop-color="#fafafa"/>
-        <stop offset="1" stop-color="#cfcfcf"/>
+        <stop offset="0" stop-color="#c0c0c0"/>
+        <stop offset=".5" stop-color="#fafafa"/>
+        <stop offset="1" stop-color="#a8a8a8"/>
       </linearGradient>
+      <linearGradient id="hg-innerShade" x1="6" y1="4" x2="64" y2="88" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+        <stop offset=".42" stop-color="#ffffff" stop-opacity="0"/>
+        <stop offset=".78" stop-color="#5a5a5a" stop-opacity=".38"/>
+        <stop offset="1" stop-color="#3a3a3a" stop-opacity=".5"/>
+      </linearGradient>
+      <filter id="hg-cast" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="4.2" result="b2"/>
+        <feOffset in="b2" dx="2.5" dy="6" result="o2"/>
+        <feFlood flood-color="#2c2c2c" flood-opacity=".32"/>
+        <feComposite operator="in" in2="o2" result="s2"/>
+        <feGaussianBlur in="SourceAlpha" stdDeviation="1.6" result="b1"/>
+        <feOffset in="b1" dx="1.2" dy="3" result="o1"/>
+        <feFlood flood-color="#1a1a1a" flood-opacity=".45"/>
+        <feComposite operator="in" in2="o1" result="s1"/>
+        <feMerge>
+          <feMergeNode in="s2"/>
+          <feMergeNode in="s1"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+      <mask id="hg-shadeMask">
+        <ellipse cx="38" cy="46" rx="33" ry="44" fill="#fff"/>
+      </mask>
     </defs>
-    <ellipse cx="38" cy="88" rx="19" ry="5" fill="#000" opacity=".09"/>
-    <ellipse cx="38" cy="83" rx="17" ry="6.5" fill="url(#hg-glove)"/>
-    <ellipse fill="url(#hg-finger)" cx="58" cy="34" rx="5.8" ry="11.5" transform="rotate(17 58 34)" opacity=".96"/>
-    <ellipse fill="url(#hg-finger)" cx="49" cy="26" rx="6.5" ry="14" transform="rotate(9 49 26)" opacity=".98"/>
-    <ellipse fill="url(#hg-finger)" cx="37" cy="20" rx="7" ry="16.5"/>
-    <ellipse fill="url(#hg-finger)" cx="24" cy="22" rx="7.2" ry="19.5" transform="rotate(-7 24 22)"/>
-    <ellipse cx="38" cy="58" rx="25" ry="22" fill="url(#hg-glove)"/>
-    <ellipse fill="url(#hg-finger)" cx="13" cy="49" rx="9.5" ry="8" transform="rotate(-32 13 49)"/>
-    <path d="M 27 42 Q 28 50 27 58" fill="none" stroke="url(#hg-ridge)" stroke-width="2.6" stroke-linecap="round" opacity=".88"/>
-    <path d="M 38 40 Q 39 49 38 57" fill="none" stroke="url(#hg-ridge)" stroke-width="2.6" stroke-linecap="round" opacity=".88"/>
-    <path d="M 49 42 Q 50 50 49 58" fill="none" stroke="url(#hg-ridge)" stroke-width="2.6" stroke-linecap="round" opacity=".88"/>
-    <ellipse cx="23" cy="7" rx="3.2" ry="4" fill="url(#hg-tip)" transform="rotate(-7 23 7)"/>
-    <ellipse cx="37" cy="5" rx="3.4" ry="4.2" fill="url(#hg-tip)"/>
-    <ellipse cx="49" cy="8" rx="3" ry="3.8" fill="url(#hg-tip)" transform="rotate(9 49 8)"/>
-    <ellipse cx="58" cy="19" rx="2.4" ry="3.2" fill="url(#hg-tip)" transform="rotate(17 58 19)"/>
+    <ellipse cx="37" cy="89" rx="16" ry="4" fill="#2a2a2a" opacity=".14"/>
+    <g filter="url(#hg-cast)">
+      <ellipse cx="36" cy="83" rx="15" ry="6" fill="url(#hg-glove)"/>
+      <path fill="url(#hg-finger)" d="M 55.2 49 L 53.5 29 Q 53 21 58 19 Q 63 21 62.2 30 L 59.5 49 Z"/>
+      <path fill="url(#hg-finger)" d="M 43.2 47 L 43.2 23 Q 43.2 14 49 12 Q 54.8 14 54.8 23 L 54.8 47 Z"/>
+      <path fill="url(#hg-finger)" d="M 29.2 47 L 29.2 18 Q 29.2 9 36 7 Q 42.8 9 42.8 18 L 42.8 47 Z"/>
+      <path fill="url(#hg-finger)" d="M 15.8 47 L 15.8 14 Q 15.8 5 22.5 3 Q 29.2 5 29.2 14 L 29.2 47 Z"/>
+      <ellipse cx="38" cy="57" rx="26" ry="21.5" fill="url(#hg-glove)"/>
+      <path fill="url(#hg-finger)" d="M 3.5 56 Q 1.5 46 7 40 Q 12.5 33 19 38 Q 23 44 21 52 Q 17 58 11 58 Q 5.5 58 3.5 56 Z"/>
+      <path fill="none" stroke="url(#hg-ridge)" stroke-width="1.8" stroke-linecap="round" opacity=".6" d="M 26 44 Q 27 52 26 60"/>
+      <path fill="none" stroke="url(#hg-ridge)" stroke-width="1.8" stroke-linecap="round" opacity=".6" d="M 37 42 Q 38 51 37 59"/>
+      <path fill="none" stroke="url(#hg-ridge)" stroke-width="1.8" stroke-linecap="round" opacity=".6" d="M 48 44 Q 49 52 48 60"/>
+    </g>
+    <rect width="72" height="92" fill="url(#hg-innerShade)" mask="url(#hg-shadeMask)" style="mix-blend-mode:multiply"/>
   </svg>
 </div>
 
@@ -619,17 +838,25 @@ html, body {
     <span class="hud-stat">총 <strong id="hud-total">0</strong></span>
   </div>
 
-  <!-- Detail Panel -->
+  <!-- Detail Panel: FAB(생각 추가) 바로 위 가로 바 -->
   <div id="detail-panel" class="hidden">
-    <div id="dp-node-badge"><div id="dp-dot"></div><span id="dp-type-text">카테고리</span></div>
-    <div id="dp-parent-row" class="hidden"><div id="dp-parent-dot"></div><span id="dp-parent-text"></span></div>
-    <div id="detail-text"></div>
-    <div id="dp-stage-info"></div>
-    <div id="dp-children-info" class="hidden"></div>
+    <div class="dp-bar-top">
+      <div class="dp-bar-identity">
+        <div id="dp-node-badge"><div id="dp-dot"></div><span id="dp-type-text">카테고리</span></div>
+        <div id="dp-parent-row" class="hidden"><div id="dp-parent-dot"></div><span id="dp-parent-text"></span></div>
+      </div>
+      <div id="detail-text"></div>
+    </div>
+    <div class="dp-bar-meta">
+      <div id="dp-stage-info"></div>
+      <div id="dp-children-info" class="hidden"></div>
+    </div>
     <div id="ai-message" class="ai-msg"></div>
-    <button id="release-ready-btn">🕊️ 우주로 보내기</button>
-    <button class="btn-add-child" id="add-child-btn" style="display:none">＋ 세부 관념 추가</button>
-    <button class="btn-dp-close" id="close-panel-btn">닫기</button>
+    <div class="dp-bar-actions">
+      <button id="release-ready-btn">🕊️ 우주로 보내기</button>
+      <button class="btn-add-child" id="add-child-btn" style="display:none">＋ 세부 관념 추가</button>
+      <button class="btn-dp-close" id="close-panel-btn">닫기</button>
+    </div>
   </div>
 
   <!-- Empty state -->
@@ -1613,17 +1840,284 @@ document.getElementById('add-fab').addEventListener('click',()=>{
   thoughtInput.focus();
 });
 
-function enterSpace(){
-  document.getElementById('input-overlay').classList.add('hidden');
+/* Pensieve entry: 1인칭 — 우물 중심, 오른쪽 장갑이 머리에서 나온 빛의 액체를 우물로 내려놓음 */
+let pensieveEntryBusy = false;
+function playPensieveEntryAnimation(onComplete){
+  const wrap = document.getElementById('pensieve-entry');
+  const canvas = document.getElementById('pensieve-canvas');
+  const threadSvg = document.getElementById('pensieve-thread-svg');
+  const threadLine = document.getElementById('pensieve-thread-line');
+  const gloveEl = document.getElementById('pensieve-glove-wrap');
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x020208);
+  scene.fog = new THREE.FogExp2(0x020208, 0.028);
+
+  const camera = new THREE.PerspectiveCamera(58, Math.max(innerWidth,1)/Math.max(innerHeight,1), 0.06, 120);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  let viewW = innerWidth, viewH = innerHeight;
+  function sizePensieve(){
+    viewW = innerWidth;
+    viewH = innerHeight;
+    const pr = Math.min(devicePixelRatio, 2);
+    camera.aspect = viewW / viewH;
+    camera.updateProjectionMatrix();
+    renderer.setPixelRatio(pr);
+    renderer.setSize(viewW, viewH, false);
+    if(threadSvg){
+      threadSvg.setAttribute('width', String(viewW));
+      threadSvg.setAttribute('height', String(viewH));
+    }
+  }
+  sizePensieve();
+  const onResize = ()=>{ if(wrap.classList.contains('show')) sizePensieve(); };
+  addEventListener('resize', onResize);
+
+  const amb = new THREE.AmbientLight(0x0c0a18, 0.5);
+  const rim = new THREE.DirectionalLight(0x8899bb, 0.12);
+  rim.position.set(-1.2, 2.5, 0.8);
+  scene.add(amb, rim);
+
+  const basinGroup = new THREE.Group();
+  scene.add(basinGroup);
+
+  const stoneMat = new THREE.MeshStandardMaterial({
+    color: 0x15151c, roughness: 0.94, metalness: 0.06,
+  });
+  const outerBowl = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.42, 1.12, 0.32, 64, 1, true),
+    stoneMat
+  );
+  outerBowl.position.y = 0.06;
+  basinGroup.add(outerBowl);
+
+  const rimTorus = new THREE.Mesh(
+    new THREE.TorusGeometry(1.38, 0.045, 10, 64),
+    new THREE.MeshStandardMaterial({ color: 0x222230, roughness: 0.88, metalness: 0.12 })
+  );
+  rimTorus.rotation.x = Math.PI / 2;
+  rimTorus.position.y = 0.21;
+  basinGroup.add(rimTorus);
+
+  const liquidGeo = new THREE.CircleGeometry(1.22, 64);
+  const liquidMat = new THREE.MeshPhysicalMaterial({
+    color: 0x1a3a88,
+    emissive: 0x5599ff,
+    emissiveIntensity: 0.75,
+    metalness: 0.04,
+    roughness: 0.22,
+    transparent: true,
+    opacity: 0.94,
+    depthWrite: false,
+  });
+  const liquid = new THREE.Mesh(liquidGeo, liquidMat);
+  liquid.rotation.x = -Math.PI / 2;
+  liquid.position.y = 0.19;
+  basinGroup.add(liquid);
+
+  const wellLight = new THREE.PointLight(0xaaddff, 2.8, 8);
+  wellLight.position.set(0, 0.55, 0);
+  basinGroup.add(wellLight);
+
+  const liquidAnchor = new THREE.Object3D();
+  liquidAnchor.position.set(0, 0.2, 0);
+  basinGroup.add(liquidAnchor);
+
+  const mistN = 520;
+  const mistPos = new Float32Array(mistN * 3);
+  const mistBase = [];
+  for(let i=0;i<mistN;i++){
+    const a = Math.random() * Math.PI * 2;
+    const rr = Math.random() * 1.12;
+    mistPos[i*3] = Math.cos(a) * rr;
+    mistPos[i*3+1] = 0.04 + Math.random() * 0.14;
+    mistPos[i*3+2] = Math.sin(a) * rr;
+    mistBase.push(mistPos[i*3], mistPos[i*3+1], mistPos[i*3+2], Math.random() * Math.PI * 2, 0.35 + Math.random() * 1.15);
+  }
+  const mistGeo = new THREE.BufferGeometry();
+  mistGeo.setAttribute('position', new THREE.BufferAttribute(mistPos, 3));
+  const mistMat = new THREE.PointsMaterial({
+    color: 0xd0e8ff,
+    size: 0.07,
+    transparent: true,
+    opacity: 0.38,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  basinGroup.add(new THREE.Points(mistGeo, mistMat));
+
+  const extractGlow = new THREE.PointLight(0xe8f4ff, 0, 4);
+  scene.add(extractGlow);
+
+  const vLiquid = new THREE.Vector3();
+  const strandStart = new THREE.Vector3(-0.06, 1.42, 0.52);
+  const vTemple = new THREE.Vector3();
+  const vTip = new THREE.Vector3();
+  const wandTouch = new THREE.Vector3();
+  const wandPulled = new THREE.Vector3();
+  const strandEnd = new THREE.Vector3();
+  const projScr = new THREE.Vector3();
+  const camPos0 = new THREE.Vector3(0.06, 0.96, 0.62);
+  const camPos1 = new THREE.Vector3(0.02, 0.88, 0.54);
+  const look0 = new THREE.Vector3(0, 0.08, -0.62);
+  const look1 = new THREE.Vector3(0, 0.02, -0.68);
+  const camLook = new THREE.Vector3();
+
+  const basinY = 0.2;
+  const basinZ = -0.52;
+
+  const DURATION = 4800;
+  const THREAD_SAMPLES = 56;
+  const t0 = performance.now();
+  let raf = 0;
+
+  function smoothstep(a,b,t){ const x=Math.min(1,Math.max(0,(t-a)/(b-a))); return x*x*(3-2*x); }
+
+  function dispose(){
+    removeEventListener('resize', onResize);
+    cancelAnimationFrame(raf);
+    if(gloveEl) gloveEl.style.transform = '';
+    if(threadLine){
+      threadLine.setAttribute('points', '');
+      threadLine.setAttribute('opacity', '0');
+    }
+    scene.traverse(obj=>{
+      if(obj.geometry) obj.geometry.dispose();
+      if(obj.material){
+        if(Array.isArray(obj.material)) obj.material.forEach(m=>m.dispose&&m.dispose());
+        else if(obj.material.dispose) obj.material.dispose();
+      }
+    });
+    renderer.dispose();
+  }
+
+  function step(now){
+    const t = Math.min(1, (now - t0) / DURATION);
+
+    basinGroup.position.set(0, basinY + Math.sin(now * 0.00075) * 0.006, basinZ);
+
+    const camEase = smoothstep(0, 0.28, t);
+    camera.position.lerpVectors(camPos0, camPos1, camEase);
+    camera.position.x += Math.sin(now * 0.0009) * 0.012;
+    camera.position.y += Math.sin(now * 0.0011) * 0.008;
+    camLook.lerpVectors(look0, look1, camEase);
+    camera.lookAt(camLook);
+
+    liquidAnchor.getWorldPosition(vLiquid);
+
+    vTemple.copy(strandStart).add(new THREE.Vector3(0.03, -0.02, 0.02));
+    wandTouch.copy(strandStart).add(new THREE.Vector3(0.11, -0.06, -0.05));
+    wandPulled.set(0.36, 0.96, 0.05);
+
+    const toTemple = smoothstep(0.12, 0.38, t);
+    const pullAway = smoothstep(0.32, 0.78, t);
+    const release = smoothstep(0.68, 1, t);
+    const releaseToWell = smoothstep(0.52, 0.94, t);
+
+    vTip.copy(wandTouch).lerp(wandPulled, toTemple);
+    vTip.lerp(vLiquid, pullAway * 0.48);
+    strandEnd.lerpVectors(vTip, vLiquid, releaseToWell);
+
+    const strandOpacity = Math.min(1, smoothstep(0.18, 0.4, t) * 1.12) * (1 - 0.8 * Math.pow(release, 1.72));
+
+    const sag = 0.11 + 0.08 * releaseToWell;
+
+    extractGlow.position.lerpVectors(vTemple, strandEnd, 0.38);
+    extractGlow.intensity = 1.85 * strandOpacity;
+
+    wellLight.intensity = 2.6 + 3.2 * Math.pow(release, 2) + Math.sin(now * 0.011) * 0.18;
+    liquidMat.emissiveIntensity = 0.72 + 1.05 * Math.pow(release, 1.45);
+
+    const arr = mistGeo.attributes.position.array;
+    for(let i=0;i<mistN;i++){
+      const bx = mistBase[i*5], by = mistBase[i*5+1], bz = mistBase[i*5+2];
+      const ph = mistBase[i*5+3], spd = mistBase[i*5+4];
+      arr[i*3] = bx + Math.cos(ph + now * 0.001 * spd) * 0.055 * release;
+      arr[i*3+1] = by + Math.sin(now * 0.0018 * spd + ph) * 0.03 * (0.35 + release);
+      arr[i*3+2] = bz + Math.sin(ph * 0.7 + now * 0.0012 * spd) * 0.05 * release;
+    }
+    mistGeo.attributes.position.needsUpdate = true;
+
+    if(gloveEl){
+      const hold = smoothstep(0, 0.24, t);
+      const lowerMem = smoothstep(0.2, 0.68, t);
+      const letGo = smoothstep(0.72, 1, t);
+      const ty = THREE.MathUtils.lerp(-36, -22, hold)
+        + THREE.MathUtils.lerp(0, 34, lowerMem)
+        + THREE.MathUtils.lerp(0, 8, letGo * 0.45);
+      const tx = THREE.MathUtils.lerp(16, 6, hold)
+        + THREE.MathUtils.lerp(0, -11, lowerMem)
+        + THREE.MathUtils.lerp(0, 3, letGo);
+      const rot = THREE.MathUtils.lerp(18, 10, hold)
+        + THREE.MathUtils.lerp(0, -16, lowerMem)
+        + THREE.MathUtils.lerp(0, 4, letGo);
+      const sc = THREE.MathUtils.lerp(0.9, 0.98, hold) + 0.04 * lowerMem * (1 - letGo);
+      gloveEl.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sc})`;
+    }
+
+    renderer.render(scene, camera);
+
+    const op = strandOpacity;
+    if(threadLine && op > 0.02){
+      const scr = [];
+      for(let i=0;i<THREAD_SAMPLES;i++){
+        const u = i / (THREAD_SAMPLES - 1);
+        const wob = Math.sin(u * 13 + now * 0.004) * 0.021 + Math.cos(u * 17 - now * 0.003) * 0.014;
+        const wx = THREE.MathUtils.lerp(vTemple.x, strandEnd.x, u) + wob;
+        const wy = THREE.MathUtils.lerp(vTemple.y, strandEnd.y, u) - Math.sin(u * Math.PI) * sag;
+        const wz = THREE.MathUtils.lerp(vTemple.z, strandEnd.z, u) + wob * 0.55;
+        projScr.set(wx, wy, wz);
+        projScr.project(camera);
+        scr.push((projScr.x * 0.5 + 0.5) * viewW, (-projScr.y * 0.5 + 0.5) * viewH);
+      }
+      if(scr.length >= 4){
+        let pts = '';
+        for(let k=0;k<scr.length;k+=2) pts += (k ? ' ' : '') + scr[k].toFixed(2) + ',' + scr[k+1].toFixed(2);
+        threadLine.setAttribute('points', pts);
+        threadLine.setAttribute('opacity', String(op));
+      }
+    }else if(threadLine){
+      threadLine.setAttribute('points', '');
+      threadLine.setAttribute('opacity', '0');
+    }
+
+    if(t < 1){
+      raf = requestAnimationFrame(step);
+      return;
+    }
+    dispose();
+    onComplete();
+  }
+
+  raf = requestAnimationFrame(step);
+}
+
+function finishEnterSpaceUI(){
   document.getElementById('space-ui').classList.remove('hidden');
   updateHUD();
   updateEmptyState();
-  // Show hint only when there are nodes to pet
   if(nodes.filter(n=>!n.userData.purified).length > 0){
     const hint=document.getElementById('pet-hint');
     hint.classList.add('show');
     setTimeout(()=>hint.classList.remove('show'),3200);
   }
+}
+
+function enterSpace(){
+  if(pensieveEntryBusy) return;
+  pensieveEntryBusy = true;
+  document.getElementById('input-overlay').classList.add('hidden');
+
+  const pe = document.getElementById('pensieve-entry');
+  pe.classList.add('show');
+  pe.setAttribute('aria-hidden','false');
+
+  playPensieveEntryAnimation(()=>{
+    pe.classList.remove('show');
+    pe.setAttribute('aria-hidden','true');
+    pensieveEntryBusy = false;
+    finishEnterSpaceUI();
+  });
 }
 
 // Add child from detail panel
@@ -1744,12 +2238,12 @@ function updateHandRotation(){
     const target = Math.max(-30, Math.min(30, handVelX * 3.8));
     handRotDeg  += (target - handRotDeg) * 0.20;
     handVelX    *= 0.65;
-    handEl.style.transform = `translate(-24px,-5px) rotate(${handRotDeg.toFixed(1)}deg)`;
+    handEl.style.transform = `translate(-23px,-3px) rotate(${handRotDeg.toFixed(1)}deg)`;
   } else {
     // Ease back to neutral so idle CSS animation can take over
     handRotDeg *= 0.78;
     if(Math.abs(handRotDeg) > 0.3){
-      handEl.style.transform = `translate(-24px,-5px) rotate(${handRotDeg.toFixed(1)}deg)`;
+      handEl.style.transform = `translate(-23px,-3px) rotate(${handRotDeg.toFixed(1)}deg)`;
     } else {
       handEl.style.transform = '';
       handRotDeg = 0;
