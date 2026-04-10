@@ -2581,6 +2581,10 @@ document.getElementById('dp-release-btn').addEventListener('click',()=>{
    POINTER EVENTS (pet vs camera)
    ================================================================ */
 const CAM_ROT_XY = (typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches) ? 0.0115 : 0.008;
+/** 두 손가락 핀치: 거리 비율에 대한 반응 (낮을수록 덜 민감) */
+const PINCH_ZOOM_SENS = 0.34;
+/** 핀치 중 줌 목표값 보간 — 손 떨림 완화 */
+const PINCH_ZOOM_SMOOTH = 0.38;
 const canvasPointers = new Map();
 let pinchDist0 = null;
 let pinchRadius0 = 28;
@@ -2619,7 +2623,10 @@ function onCanvasPointerMove(e){
       pinchDist0 = d;
       pinchRadius0 = camRadius;
     }else{
-      camRadius = Math.max(8, Math.min(60, pinchRadius0 * (d / pinchDist0)));
+      const raw = d / pinchDist0;
+      const damped = 1 + (raw - 1) * PINCH_ZOOM_SENS;
+      const targetR = Math.max(8, Math.min(60, pinchRadius0 * damped));
+      camRadius += (targetR - camRadius) * PINCH_ZOOM_SMOOTH;
     }
     return;
   }
