@@ -313,23 +313,24 @@ html, body {
 
 .ai-msg {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   font-style: normal;
-  color: rgba(255, 246, 236, .94);
+  letter-spacing: 0.01em;
+  color: rgba(218, 208, 232, .9);
   padding: 14px 12px 16px;
   margin: 2px 0 4px;
-  line-height: 1.58;
+  line-height: 1.62;
   border: none;
   border-radius: 22px;
   background:
-    radial-gradient(ellipse 110% 90% at 50% -30%, rgba(255, 225, 195, .38), transparent 58%),
-    radial-gradient(ellipse 100% 140% at 100% 40%, rgba(190, 165, 255, .14), transparent 52%),
-    rgba(18, 12, 38, .12);
+    radial-gradient(ellipse 120% 100% at 45% -25%, rgba(210, 195, 235, .16), transparent 62%),
+    radial-gradient(ellipse 90% 120% at 95% 45%, rgba(165, 145, 205, .08), transparent 55%),
+    rgba(22, 16, 42, .1);
   box-shadow:
-    0 0 36px rgba(255, 200, 165, .12),
-    0 0 72px rgba(170, 130, 240, .09),
-    inset 0 0 28px rgba(255, 230, 210, .05);
-  text-shadow: 0 0 20px rgba(255, 212, 185, .42), 0 0 40px rgba(220, 190, 255, .15);
+    0 0 28px rgba(170, 150, 210, .07),
+    0 0 56px rgba(120, 100, 160, .05),
+    inset 0 0 32px rgba(200, 190, 230, .04);
+  text-shadow: none;
   word-break: keep-all;
 }
 
@@ -777,8 +778,8 @@ html, body {
         <div id="dp-category-label"></div>
       </div>
       <div id="detail-text"></div>
-      <div id="ai-message" class="ai-msg"></div>
       <div id="dp-stage-info"></div>
+      <div id="ai-message" class="ai-msg"></div>
       <button type="button" class="btn-dp-close" id="close-panel-btn">닫기</button>
     </div>
   </div>
