@@ -82,7 +82,13 @@ html, body {
   background: radial-gradient(ellipse at center, rgba(20,0,60,.97) 0%, rgba(0,0,17,.99) 100%);
   transition: opacity .6s, visibility .6s;
 }
-#input-overlay.hidden { opacity: 0; visibility: hidden; }
+#input-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  /* 숨김 상태에도 z-index 100이면 크레딧(90) 위에 빈 레이어로 남아 모바일에서 링크가 안 보임 */
+  z-index: 30;
+}
 
 .input-card {
   width: 92%; max-width: 560px;
@@ -167,6 +173,27 @@ html, body {
 #enter-space-btn { display: none; }
 #enter-space-btn.visible { display: block; }
 
+/* 첫 화면 카드 안 크레딧 — 고정 링크는 오버레이 뒤에 가려지므로 카드 하단에 표시 */
+.overlay-card-credit {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.overlay-card-credit a {
+  color: rgba(140, 130, 195, .52);
+  text-decoration: none;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.overlay-card-credit a:hover,
+.overlay-card-credit a:active {
+  color: rgba(175, 165, 220, .85);
+  text-decoration: underline;
+  text-decoration-color: rgba(140, 130, 195, .4);
+  text-underline-offset: 2px;
+}
+
 /* ==================== SPACE UI ==================== */
 #space-ui {
   position: fixed; inset: 0; pointer-events: none; z-index: 20; transition: opacity .6s;
@@ -232,7 +259,7 @@ html, body {
   background: rgba(6, 2, 18, .94);
   border: 1px solid rgba(130, 80, 230, .32);
   border-radius: 14px;
-  padding: 12px 12px 11px;
+  padding: 17px 15px 16px;
   backdrop-filter: blur(20px);
   box-shadow: -6px 0 28px rgba(60, 0, 140, .32), 0 0 1px rgba(200, 180, 255, .18);
   pointer-events: auto;
@@ -251,7 +278,7 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 9px;
 }
 
 .dp-head {
@@ -504,8 +531,8 @@ html, body {
   position: fixed;
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   right: calc(14px + env(safe-area-inset-right, 0px));
-  /* 입력 오버레이(100) 아래에 두어 카드와 겹치지 않게 — 공간 입장 후에만 위에 보임 */
-  z-index: 90;
+  /* 오버레이가 열려 있을 때(100)만 아래에 깔림 · .hidden 시 오버레이 z-index 30이라 위에 표시됨 */
+  z-index: 95;
   font-size: 0;
   line-height: 0;
   font-weight: 400;
@@ -642,6 +669,7 @@ html, body {
   #thought-input { min-height: 160px; font-size: 14px; padding: 14px 14px; }
   .input-hint { font-size: 11.5px; padding: 0 2px; margin-top: 10px; }
   .btn-primary { margin-top: 14px; padding: 14px; font-size: 14px; }
+  .overlay-card-credit { margin-top: 14px; font-size: 10.5px; }
 }
   </style>
 </head>
@@ -746,13 +774,14 @@ html, body {
     <textarea id="thought-input" placeholder="문장이나 단어, 느낌, 어떤 형태든 괜찮아요.
 
 예) 요즘 회사에서 너무 힘들어. 팀장이 자꾸 압박을 줘서 지쳐가고 있어.
-발표도 잘 못할 것 같고. 친구들이랑도 멀어지는 것 같아서 외로워.
 사실 다 내 탓인 것 같아. 미래가 막막해."></textarea>
     <div class="input-hint">✦ 적으시면 관념들로 자동 구성돼요 · 구슬을 쓰다듬어 정화하세요</div>
 
     <button class="btn-primary" id="add-thought-btn">🌌 공간에 펼치기</button>
     <div class="divider"><span>또는</span></div>
     <button class="btn-enter" id="enter-space-btn">정화 공간 입장하기 →</button>
+
+    <p class="overlay-card-credit"><a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
 
   </div>
 </div>

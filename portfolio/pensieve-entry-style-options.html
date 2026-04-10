@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>펜시브 입장 — 분위기 안 (HTML/CSS 비교)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 28px 20px 48px;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #080810;
+      color: rgba(220, 215, 235, 0.88);
+      line-height: 1.55;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 0 0 8px;
+      color: #e8e4f5;
+    }
+    .lead {
+      margin: 0 0 28px;
+      max-width: 52rem;
+      font-size: 0.92rem;
+      color: rgba(180, 170, 210, 0.75);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+      gap: 22px;
+      max-width: 1200px;
+    }
+    .card {
+      background: rgba(18, 14, 32, 0.65);
+      border: 1px solid rgba(120, 90, 200, 0.2);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      padding: 14px 16px 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ddd5f0;
+    }
+    .card .tag {
+      display: inline-block;
+      margin: 0 16px 10px;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(160, 140, 220, 0.55);
+    }
+    .card p.desc {
+      margin: 0 16px 14px;
+      font-size: 0.82rem;
+      color: rgba(170, 160, 200, 0.72);
+    }
+    /* 미리보기 프레임 (실제 입장은 WebGL이지만, 오버레이·타이포 느낌만 비교) */
+    .preview {
+      position: relative;
+      aspect-ratio: 9 / 16;
+      max-height: 320px;
+      margin: 0 12px 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .preview-inner {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .well-fake {
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      transform: translate(-50%, -50%);
+      width: 42%;
+      height: 14%;
+      border-radius: 50%;
+      opacity: 0.85;
+    }
+    .vignette-fake {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .glove-fake {
+      position: absolute;
+      right: 4%;
+      bottom: 6%;
+      width: 22%;
+      height: 18%;
+      border-radius: 40% 40% 45% 45%;
+      background: linear-gradient(160deg, #fff 0%, #d8dce8 100%);
+      box-shadow: -3px 8px 20px rgba(0,0,0,.45);
+      opacity: 0.92;
+    }
+    .cap-fake {
+      position: absolute;
+      left: 50%;
+      bottom: 8%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      white-space: nowrap;
+      text-align: center;
+      max-width: 92%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .thread-fake {
+      position: absolute;
+      inset: 0;
+    }
+    h2.section-title {
+      margin: 40px 0 8px;
+      font-size: 1.08rem;
+      font-weight: 600;
+      color: #e0d8f8;
+      max-width: 1200px;
+    }
+    .section-sub {
+      margin: 0 0 22px;
+      max-width: 52rem;
+      font-size: 0.82rem;
+      color: rgba(170, 160, 200, 0.72);
+    }
+    .preview--thread {
+      max-height: 200px;
+    }
+    details.snip {
+      margin: 0 12px 14px;
+      font-size: 0.78rem;
+    }
+    details.snip summary {
+      cursor: pointer;
+      color: rgba(150, 180, 255, 0.75);
+      padding: 6px 0;
+    }
+    details.snip pre {
+      margin: 8px 0 0;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.35);
+      border-radius: 8px;
+      overflow: auto;
+      color: rgba(200, 210, 230, 0.9);
+      font-size: 0.68rem;
+      line-height: 1.45;
+    }
+
+    /* ========== 안 A: 지금과 비슷 (차가운 청색) ========== */
+    .pe-a .preview-inner { background: radial-gradient(ellipse 80% 55% at 50% 48%, #0a1638 0%, #030308 72%); }
+    .pe-a .well-fake {
+      background: radial-gradient(ellipse at 50% 40%, rgba(100, 170, 255, 0.45), rgba(20, 40, 100, 0.5));
+      box-shadow: 0 0 24px rgba(80, 140, 255, 0.35);
+    }
+    .pe-a .vignette-fake {
+      background: radial-gradient(ellipse 92% 75% at 50% 42%, transparent 28%, rgba(3,3,14,.72) 100%);
+    }
+    .pe-a .cap-fake {
+      color: rgba(185, 210, 255, 0.6);
+      text-shadow: 0 0 12px rgba(80, 140, 255, 0.35);
+    }
+    .pe-a .glove-fake { filter: drop-shadow(0 0 8px rgba(200,220,255,.12)); }
+
+    /* ========== 안 B: 시네마틱 (따뜻한 앰버 중심) ========== */
+    .pe-b .preview-inner { background: radial-gradient(ellipse 70% 50% at 50% 45%, #1a1208 0%, #020203 85%); }
+    .pe-b .well-fake {
+      background: radial-gradient(ellipse at 50% 35%, rgba(255, 190, 120, 0.35), rgba(60, 35, 12, 0.55));
+      box-shadow: 0 0 32px rgba(255, 160, 80, 0.22);
+    }
+    .pe-b .vignette-fake {
+      background: radial-gradient(ellipse 88% 78% at 50% 40%, transparent 18%, rgba(0,0,0,.88) 100%);
+    }
+    .pe-b .cap-fake {
+      color: rgba(255, 210, 170, 0.5);
+      text-shadow: 0 0 16px rgba(255, 140, 60, 0.2);
+    }
+    .pe-b .glove-fake {
+      background: linear-gradient(160deg, #f8f4ee 0%, #c8c0b8 100%);
+      filter: drop-shadow(0 0 10px rgba(255,200,120,.08));
+    }
+
+    /* ========== 안 C: 꿈결·기억 (라벤더 실버) ========== */
+    .pe-c .preview-inner {
+      background:
+        radial-gradient(ellipse 100% 80% at 50% 100%, rgba(80, 40, 120, 0.35) 0%, transparent 45%),
+        radial-gradient(ellipse 75% 55% at 50% 42%, #1a1030 0%, #06040c 78%);
+    }
+    .pe-c .well-fake {
+      background: radial-gradient(ellipse at 50% 38%, rgba(200, 170, 255, 0.4), rgba(50, 30, 80, 0.55));
+      box-shadow: 0 0 28px rgba(180, 140, 255, 0.28);
+    }
+    .pe-c .vignette-fake {
+      background: radial-gradient(ellipse 95% 80% at 50% 38%, transparent 22%, rgba(8, 4, 18, .78) 100%);
+    }
+    .pe-c .cap-fake {
+      color: rgba(210, 190, 240, 0.58);
+      text-shadow: 0 0 18px rgba(160, 120, 255, 0.25);
+    }
+
+    /* ========== 안 D: 미니멀 (여백·얇은 실) ========== */
+    .pe-d .preview-inner { background: #050508; }
+    .pe-d .well-fake {
+      width: 36%;
+      height: 11%;
+      background: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      box-shadow: none;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .pe-d .vignette-fake {
+      background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 35%, rgba(0,0,0,.55) 100%);
+    }
+    .pe-d .cap-fake {
+      font-size: 8px;
+      color: rgba(255,255,255,0.28);
+      letter-spacing: 0.12em;
+      text-shadow: none;
+    }
+    .pe-d .glove-fake { opacity: 0.35; transform: scale(0.92); right: 6%; }
+
+    /* ========== 안 E: 의식·리추얼 (틸 포인트) ========== */
+    .pe-e .preview-inner { background: radial-gradient(ellipse 78% 58% at 50% 46%, #061a1c 0%, #020306 80%); }
+    .pe-e .well-fake {
+      background: radial-gradient(ellipse at 50% 36%, rgba(80, 220, 200, 0.22), rgba(10, 40, 45, 0.65));
+      box-shadow: 0 0 36px rgba(40, 200, 180, 0.18);
+    }
+    .pe-e .vignette-fake {
+      background: radial-gradient(ellipse 90% 72% at 50% 44%, transparent 26%, rgba(2, 8, 12, .82) 100%);
+    }
+    .pe-e .cap-fake {
+      color: rgba(160, 230, 220, 0.52);
+      text-shadow: 0 0 14px rgba(50, 200, 180, 0.22);
+    }
+  </style>
+</head>
+<body>
+
+<h1>펜시브 입장 — 분위기 안 (HTML/CSS)</h1>
+<p class="lead">
+  WebGL 우물·액체는 그대로 두고, <strong>비네트·캡션·장갑 톤·실(SVG) 색</strong>만 바꿔도 “전체 느낌”이 꽤 달라집니다.
+  아래는 같은 레이아웃으로 오버레이만 다른 다섯 가지입니다. 마음에 드는 안 번호를 알려주면 <code>index.html</code> / <code>mind-cleanse.html</code>에 옮겨 드리면 됩니다.
+</p>
+
+<div class="grid">
+
+  <article class="card pe-a">
+    <h2>안 A — 차가운 청색 (현재 계열)</h2>
+    <span class="tag">cool · familiar</span>
+    <p class="desc">지금 구조와 가장 가깝습니다. 우물이 “마법의 물” 느낌.</p>
+    <div class="preview">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="glow-a" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="1.2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="#eaf4ff" stroke-width="0.6" filter="url(#glow-a)" opacity="0.85"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+        <p class="cap-fake">머리에서 이어진 빛을 우물에 풀어놓는 중…</p>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>복사용 CSS (비네트·캡션·실)</summary>
+      <pre>#pensieve-entry .pensieve-vignette {
+  background: radial-gradient(ellipse 92% 75% at 50% 42%, transparent 28%, rgba(3,3,14,.62) 100%);
+}
+#pensieve-entry .pensieve-caption {
+  color: rgba(185, 210, 255, 0.55);
+  text-shadow: 0 0 24px rgba(80, 140, 255, 0.35);
+}
+/* SVG polyline */ stroke="#eaf4ff" stroke-width="2.5"</pre>
+    </details>
+  </article>
+
+  <article class="card pe-b">
+    <h2>안 B — 시네마틱 앰버</h2>
+    <span class="tag">warm · film</span>
+    <p class="desc">가장자리를 더 깎고, 중심만 따뜻하게. “장면 전환” 느낌.</p>
+    <div class="preview">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="glow-b" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="1.4" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="#ffe8c8" stroke-width="0.55" filter="url(#glow-b)" opacity="0.9"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+        <p class="cap-fake">기억을 건져 올리는 중…</p>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>복사용 CSS / SVG</summary>
+      <pre>#pensieve-entry .pensieve-vignette {
+  background: radial-gradient(ellipse 88% 78% at 50% 40%, transparent 18%, rgba(0,0,0,.88) 100%);
+}
+#pensieve-entry .pensieve-caption {
+  color: rgba(255, 210, 170, 0.5);
+  text-shadow: 0 0 16px rgba(255, 140, 60, 0.2);
+}
+/* 실 */ stroke="#ffe8c8" stroke-width="2.8"
+/* 장갑 */ filter: drop-shadow(0 0 12px rgba(255,180,100,.1));</pre>
+    </details>
+  </article>
+
+  <article class="card pe-c">
+    <h2>안 C — 꿈결·라벤더</h2>
+    <span class="tag">soft · memory</span>
+    <p class="desc">아래쪽에 보라 안개. 정화 앱 톤과도 잘 맞을 수 있음.</p>
+    <div class="preview">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="glow-c" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.5" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="#e8d8ff" stroke-width="0.55" filter="url(#glow-c)" opacity="0.88"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+        <p class="cap-fake">생각을 잠시 내려놓는 중…</p>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>복사용 CSS / SVG</summary>
+      <pre>#pensieve-entry .pensieve-vignette {
+  background:
+    radial-gradient(ellipse 100% 55% at 50% 100%, rgba(60,30,90,.25) 0%, transparent 50%),
+    radial-gradient(ellipse 95% 80% at 50% 38%, transparent 22%, rgba(8,4,18,.78) 100%);
+}
+#pensieve-entry .pensieve-caption {
+  color: rgba(210, 190, 240, 0.58);
+}
+/* 실 */ stroke="#e8d8ff"</pre>
+    </details>
+  </article>
+
+  <article class="card pe-d">
+    <h2>안 D — 극미니멀</h2>
+    <span class="tag">quiet · thin</span>
+    <p class="desc">우물·장갑을 거의 기호로. 실과 한 줄 문장만 살림.</p>
+    <div class="preview">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <polyline fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="0.35" opacity="0.9"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+        <p class="cap-fake">잠시만요</p>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>복사용 CSS / SVG</summary>
+      <pre>#pensieve-entry .pensieve-vignette {
+  background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 35%, rgba(0,0,0,.55) 100%);
+}
+#pensieve-entry .pensieve-caption {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.28);
+  text-shadow: none;
+}
+/* 실 */ stroke="#ffffff" stroke-width="1.2" opacity 낮게 + 필터 약하게</pre>
+    </details>
+  </article>
+
+  <article class="card pe-e">
+    <h2>안 E — 의식·틸</h2>
+    <span class="tag">ritual · teal</span>
+    <p class="desc">청색과 다른 축. “정화·숨” 이미지에 가깝게.</p>
+    <div class="preview">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="glow-e" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="1.3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="#c8fff4" stroke-width="0.55" filter="url(#glow-e)" opacity="0.82"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+        <p class="cap-fake">내면으로 들어가는 중…</p>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>복사용 CSS / SVG</summary>
+      <pre>#pensieve-entry .pensieve-vignette {
+  background: radial-gradient(ellipse 90% 72% at 50% 44%, transparent 26%, rgba(2,8,12,.82) 100%);
+}
+#pensieve-entry .pensieve-caption {
+  color: rgba(160, 230, 220, 0.52);
+  text-shadow: 0 0 14px rgba(50, 200, 180, 0.22);
+}
+/* 실 */ stroke="#c8fff4"</pre>
+    </details>
+  </article>
+
+</div>
+
+<h2 class="section-title">안 A 톤 고정 — 실(스레드) 표현만 비교</h2>
+<p class="section-sub">
+  배경·비네트·우물·장갑은 안 A와 동일하고, <strong>SVG 한 겹(또는 이중선·입자)</strong>만 바꿉니다.
+  본편은 <code>playPensieveEntryAnimation</code> 안의 <code>pensieve-thread-line</code> 폴리라인을 아래 중 하나 스타일로 맞추면 됩니다.
+</p>
+
+<div class="grid">
+
+  <article class="card pe-a">
+    <h2>실 1 — 단일선 + 글로우 (기준)</h2>
+    <span class="tag">polyline · filter</span>
+    <p class="desc">지금 구현과 같은 계열. 한 줄에 블러 머지.</p>
+    <div class="preview preview--thread">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="th1" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="#eaf4ff" stroke-width="0.55" stroke-linecap="round" filter="url(#th1)" opacity="0.9"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>적용 힌트</summary>
+      <pre>폴리라인 1개 · stroke-width 2.2~2.8
+filter: blur(stdDeviation 4~6) + merge</pre>
+    </details>
+  </article>
+
+  <article class="card pe-a">
+    <h2>실 2 — 이중선 (헤일로 + 코어)</h2>
+    <span class="tag">two strokes</span>
+    <p class="desc">아래는 넓고 흐릿하게, 위는 얇고 선명하게. “실 두께”가 더 읽힘.</p>
+    <div class="preview preview--thread">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="th2a" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="rgba(120,175,255,0.5)" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" filter="url(#th2a)" opacity="0.85"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+          <polyline fill="none" stroke="#ffffff" stroke-width="0.32" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>적용 힌트</summary>
+      <pre>같은 points로 &lt;polyline&gt; 두 번
+아래: 굵기 큼 + 블러 강함 + 청색 반투명
+위: stroke-width 1~1.4, #fff, filter 없음</pre>
+    </details>
+  </article>
+
+  <article class="card pe-a">
+    <h2>실 3 — 점선</h2>
+    <span class="tag">stroke-dasharray</span>
+    <p class="desc">“끊기는 기억” 느낌. 속도감 있게 움직이면 더 살아남.</p>
+    <div class="preview preview--thread">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="th3" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="#eaf4ff" stroke-width="0.5" stroke-linecap="round" stroke-dasharray="1.8 2.4" filter="url(#th3)" opacity="0.88"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>적용 힌트</summary>
+      <pre>stroke-dasharray="6 10" (화면 좌표에 맞게 조정)
+stroke-dashoffset 애니메이션으로 흐름 가능</pre>
+    </details>
+  </article>
+
+  <article class="card pe-a">
+    <h2>실 4 — 베지어 한 줄</h2>
+    <span class="tag">path · smooth</span>
+    <p class="desc">폴리라인 꺾임이 싫을 때. 매 프레임 제어는 살짝 더 번거로움.</p>
+    <div class="preview preview--thread">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="th4" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.15" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <path fill="none" stroke="#eaf4ff" stroke-width="0.52" stroke-linecap="round" filter="url(#th4)" opacity="0.9"
+            d="M78 28 C68 38 54 54 48 72 C43 90 44 110 50 128"/>
+        </svg>
+        <div class="glove-fake"></div>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>적용 힌트</summary>
+      <pre>점 배열로 Catmull-Rom → SVG path d 문자열 생성
+또는 제어점만 lerp 후 고정 C/Q 곡선</pre>
+    </details>
+  </article>
+
+  <article class="card pe-a">
+    <h2>실 5 — 구슬 체인</h2>
+    <span class="tag">circles · beads</span>
+    <p class="desc">“입자가 실처럼 이어짐”. 얇은 선으로 연결하면 더 실 같음.</p>
+    <div class="preview preview--thread">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="th5" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="0.9" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="rgba(200,225,255,0.25)" stroke-width="0.2" stroke-linecap="round"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+          <g filter="url(#th5)">
+            <circle cx="78" cy="28" r="0.85" fill="#f2f8ff"/>
+            <circle cx="62" cy="48" r="0.75" fill="#eaf4ff"/>
+            <circle cx="48" cy="72" r="0.7" fill="#eaf4ff"/>
+            <circle cx="42" cy="98" r="0.65" fill="#e4f0ff"/>
+            <circle cx="46" cy="118" r="0.6" fill="#dff0ff"/>
+            <circle cx="50" cy="128" r="0.55" fill="#d8ecff"/>
+          </g>
+        </svg>
+        <div class="glove-fake"></div>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>적용 힌트</summary>
+      <pre>THREAD_SAMPLES만큼 &lt;circle&gt; 또는 한 path + stroke-dasharray 점묘
+반지름을 u에 따라 살짝 펄스</pre>
+    </details>
+  </article>
+
+  <article class="card pe-a">
+    <h2>실 6 — 아주 부드러운 광채</h2>
+    <span class="tag">soft bloom</span>
+    <p class="desc">선은 거의 안 보이고 빛만 길게. 몽환적으로.</p>
+    <div class="preview preview--thread">
+      <div class="preview-inner">
+        <div class="vignette-fake"></div>
+        <div class="well-fake"></div>
+        <svg class="thread-fake" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="th6" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="3.2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <polyline fill="none" stroke="rgba(180,215,255,0.75)" stroke-width="0.9" stroke-linecap="round" filter="url(#th6)" opacity="0.75"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+          <polyline fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.22" stroke-linecap="round" opacity="0.7"
+            points="78,28 62,48 48,72 42,98 46,118 50,128"/>
+        </svg>
+        <div class="glove-fake"></div>
+      </div>
+    </div>
+    <details class="snip">
+      <summary>적용 힌트</summary>
+      <pre>첫 레이어: 굵게 + stdDeviation 크게
+위에 아주 얇은 흰선 (선택)</pre>
+    </details>
+  </article>
+
+</div>
+
+<p style="margin-top:32px;font-size:0.82rem;color:rgba(150,140,180,.55);max-width:52rem;">
+  열기: 로컬 서버에서 <code>portfolio/pensieve-entry-style-options.html</code> 파일을 브라우저로 열면 됩니다.
+  Three.js 장면 색(액체·안개)까지 맞추려면 같은 톤으로 <code>playPensieveEntryAnimation</code> 안의 색 상수만 추가로 조정하면 됩니다.
+</p>
+
+</body>
+</html>

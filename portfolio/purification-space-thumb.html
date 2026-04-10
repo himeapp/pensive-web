@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1200, height=675">
+  <title>마음 정화 공간 — 포트폴리오 썸네일용</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1200px; height: 675px; overflow: hidden;
+      background: #000011;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #e0e0ff;
+    }
+    #three-canvas { position: absolute; top: 0; left: 0; width: 1200px; height: 675px; display: block; }
+    #labels-container {
+      position: absolute; top: 0; left: 0; width: 1200px; height: 675px;
+      pointer-events: none; z-index: 10;
+    }
+    .node-label {
+      position: absolute; pointer-events: none;
+      transform: translate(-50%, -230%);
+      text-shadow: 0 0 10px currentColor;
+      text-align: center; line-height: 1.35;
+    }
+    .node-label.category {
+      font-size: 15px; font-weight: 700; padding: 6px 16px; border-radius: 20px; white-space: nowrap;
+    }
+    .node-label.thought {
+      font-size: 12px; font-weight: 400; padding: 5px 11px; border-radius: 12px;
+      max-width: 170px; word-break: keep-all;
+    }
+    #hud-top {
+      position: absolute;
+      top: 22px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(0,0,10,.78); border: 1px solid rgba(100,60,200,.28);
+      border-radius: 40px; padding: 10px 22px;
+      backdrop-filter: blur(14px); z-index: 20; white-space: nowrap;
+    }
+    #hud-title {
+      font-size: 13px; font-weight: 700;
+      color: #9966ff; letter-spacing: .4px;
+    }
+    .hud-div { width: 1px; height: 16px; background: rgba(255,255,255,.12); }
+    .hud-stat { font-size: 12px; color: rgba(180,160,220,.88); }
+    .hud-stat strong { color: #e8d8ff; font-weight: 600; }
+    .hud-progress-wrap { display: flex; align-items: center; gap: 6px; }
+    .hud-bar { width: 78px; height: 7px; background: rgba(255,255,255,.14); border-radius: 4px; overflow: hidden; }
+    .hud-fill { height: 100%; width: 66%; background: linear-gradient(90deg,#7733ff,#cc88ff); border-radius: 3px; }
+    #thumb-tagline {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; font-weight: 500; letter-spacing: .12em;
+      color: rgba(180,160,220,.45); z-index: 20; text-transform: uppercase;
+    }
+    #vignette {
+      position: absolute; inset: 0; pointer-events: none; z-index: 5;
+      background: radial-gradient(ellipse at 50% 45%, transparent 0%, transparent 42%, rgba(0,0,17,.55) 100%);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="three-canvas"></canvas>
+  <div id="labels-container"></div>
+  <div id="vignette"></div>
+  <div id="hud-top">
+    <span id="hud-title">마음 정화 공간</span>
+    <div class="hud-div"></div>
+    <div class="hud-progress-wrap">
+      <div class="hud-bar"><div class="hud-fill"></div></div>
+      <span class="hud-stat"><strong>2</strong>/3</span>
+    </div>
+    <div class="hud-div"></div>
+    <span class="hud-stat">총 <strong>12</strong></span>
+  </div>
+  <p id="thumb-tagline">Mind Cleanse · 구슬을 쓰다듬어 정화하는 경험</p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  'use strict';
+  const PALETTE = [
+    { r: 136, g: 51, b: 255, hex: 0x8833ff, glow: 0xaa77ff },
+    { r: 51, g: 136, b: 255, hex: 0x3388ff, glow: 0x66aaff },
+    { r: 255, g: 70, b: 50, hex: 0xff4632, glow: 0xff9977 },
+    { r: 34, g: 200, b: 120, hex: 0x22c878, glow: 0x55ffaa },
+  ];
+  function pal(i) { return PALETTE[i % PALETTE.length]; }
+
+  const W = 1200, H = 675;
+  const canvas = document.getElementById('three-canvas');
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x000011, 0.011);
+
+  const camera = new THREE.PerspectiveCamera(58, W / H, 0.1, 500);
+  const camTheta = 0.62, camPhi = 1.08, camRadius = 27;
+  camera.position.set(
+    camRadius * Math.sin(camPhi) * Math.cos(camTheta),
+    camRadius * Math.cos(camPhi),
+    camRadius * Math.sin(camPhi) * Math.sin(camTheta)
+  );
+  camera.lookAt(0, 0.3, 0);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(1);
+  renderer.setClearColor(0x000011, 1);
+
+  scene.add(new THREE.AmbientLight(0x1a0a33, 3));
+  const ctrLight = new THREE.PointLight(0x9966ff, 2.6, 85);
+  const warmLight = new THREE.PointLight(0xff9944, 1.15, 65);
+  warmLight.position.set(22, 14, 12);
+  scene.add(ctrLight, warmLight);
+
+  function mulberry32(seed) {
+    return function () {
+      let t = (seed += 0x6D2B79F5);
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const starRand = mulberry32(20260410);
+  function rSph(R) {
+    const t = starRand() * Math.PI * 2, p = Math.acos(2 * starRand() - 1);
+    const r = R * (.5 + starRand() * .5);
+    return [r * Math.sin(p) * Math.cos(t), r * Math.sin(p) * Math.sin(t), r * Math.cos(p)];
+  }
+  function addPoints(posArr, colArr, size, opacity) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+    if (colArr) g.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+    const mat = new THREE.PointsMaterial({
+      size, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexColors: !!colArr, sizeAttenuation: true,
+    });
+    scene.add(new THREE.Points(g, mat));
+  }
+  (function stars() {
+    const N1 = 4200, p1 = new Float32Array(N1 * 3), c1 = new Float32Array(N1 * 3);
+    for (let i = 0; i < N1; i++) {
+      const [x, y, z] = rSph(520);
+      p1[i * 3] = x; p1[i * 3 + 1] = y; p1[i * 3 + 2] = z;
+      const t = starRand();
+      c1[i * 3] = .55 + t * .45; c1[i * 3 + 1] = .55 + t * .28; c1[i * 3 + 2] = .62 + t * .35;
+    }
+    addPoints(p1, c1, .12, .78);
+    const N2 = 700, p2 = new Float32Array(N2 * 3), c2 = new Float32Array(N2 * 3);
+    for (let i = 0; i < N2; i++) {
+      const [x, y, z] = rSph(450);
+      p2[i * 3] = x; p2[i * 3 + 1] = y; p2[i * 3 + 2] = z;
+      const r = starRand();
+      if (r < .3) { c2[i * 3] = .65; c2[i * 3 + 1] = .75; c2[i * 3 + 2] = 1; }
+      else if (r < .6) { c2[i * 3] = 1; c2[i * 3 + 1] = .95; c2[i * 3 + 2] = .75; }
+      else { c2[i * 3] = 1; c2[i * 3 + 1] = 1; c2[i * 3 + 2] = 1; }
+    }
+    addPoints(p2, c2, .34, .68);
+    const NMW = 3800, pmw = new Float32Array(NMW * 3), cmw = new Float32Array(NMW * 3);
+    const tiltX = 1.01, tiltY = 0.61, cX = Math.cos(tiltX), sX = Math.sin(tiltX), cY = Math.cos(tiltY), sY = Math.sin(tiltY);
+    for (let i = 0; i < NMW; i++) {
+      const lon = starRand() * Math.PI * 2;
+      const lat = (starRand() + starRand() + starRand() - 1.5) * .22;
+      const r = 130 + starRand() * 300;
+      let gx = r * Math.cos(lat) * Math.cos(lon), gy = r * Math.cos(lat) * Math.sin(lon), gz = r * Math.sin(lat);
+      const gy2 = gy * cX - gz * sX, gz2 = gy * sX + gz * cX;
+      pmw[i * 3] = gx * cY + gz2 * sY; pmw[i * 3 + 1] = gy2; pmw[i * 3 + 2] = -gx * sY + gz2 * cY;
+      const t2 = starRand();
+      if (starRand() > .52) { cmw[i * 3] = .9 + t2 * .1; cmw[i * 3 + 1] = .8 + t2 * .1; cmw[i * 3 + 2] = .68; }
+      else { cmw[i * 3] = .72 + t2 * .25; cmw[i * 3 + 1] = .74 + t2 * .2; cmw[i * 3 + 2] = .92; }
+    }
+    addPoints(pmw, cmw, .085, .58);
+    [[420, 88, 0x4411aa, 4.2, .05], [320, 72, 0x7722cc, 5, .038], [240, 58, 0x113366, 5.5, .035]].forEach(([N, R, col, size, op]) => {
+      const pp = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        const [x, y, z] = rSph(R);
+        pp[i * 3] = x; pp[i * 3 + 1] = y * .32; pp[i * 3 + 2] = z;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+      scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+        size, color: col, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending,
+      })));
+    });
+  })();
+
+  const nodes = [];
+  const connections = [];
+  const labelsEl = document.getElementById('labels-container');
+  let nodeSeq = 0;
+
+  function makeMesh(isCategory, cIdx) {
+    const p = pal(cIdx);
+    const r = isCategory ? 1.15 : 0.48;
+    const mat = new THREE.MeshPhongMaterial({
+      color: p.hex,
+      emissive: new THREE.Color(p.r / 480, p.g / 480, p.b / 480),
+      emissiveIntensity: 1.05,
+      shininess: isCategory ? 92 : 52,
+      transparent: true,
+      opacity: isCategory ? .93 : .82,
+    });
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, isCategory ? 32 : 20, isCategory ? 32 : 20), mat);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: p.glow, transparent: true, opacity: isCategory ? .11 : .07,
+      side: THREE.BackSide, depthWrite: false,
+    });
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(r * (isCategory ? 1.75 : 1.95), 14, 14), glowMat);
+    glow.raycast = function () {};
+    mesh.add(glow);
+    return mesh;
+  }
+
+  function createLabel(text, isCategory, ci) {
+    const p = pal(ci);
+    const div = document.createElement('div');
+    div.className = 'node-label ' + (isCategory ? 'category' : 'thought');
+    div.textContent = text;
+    if (isCategory) {
+      div.style.color = `rgb(${Math.min(p.r + 90, 255)},${Math.min(p.g + 90, 255)},${Math.min(p.b + 90, 255)})`;
+      div.style.background = `rgba(${p.r},${p.g},${p.b},.52)`;
+      div.style.border = `1px solid rgba(${p.r},${p.g},${p.b},.55)`;
+    } else {
+      const tr = Math.round(p.r * 0.45 + 130), tg = Math.round(p.g * 0.45 + 130), tb = Math.round(p.b * 0.45 + 140);
+      div.style.color = `rgb(${Math.min(tr + 40, 255)},${Math.min(tg + 40, 255)},${Math.min(tb + 40, 255)})`;
+      div.style.background = `rgba(${tr},${tg},${tb},.28)`;
+      div.style.border = `1px solid rgba(${tr},${tg},${tb},.38)`;
+    }
+    labelsEl.appendChild(div);
+    return div;
+  }
+
+  function addConnection(a, b) {
+    const geo = new THREE.BufferGeometry().setFromPoints([a.position.clone(), b.position.clone()]);
+    const p = pal(a.userData.cIdx);
+    scene.add(new THREE.Line(geo, new THREE.LineBasicMaterial({
+      color: p.glow, transparent: true, opacity: .42,
+    })));
+    connections.push({ geo, a, b });
+  }
+
+  function addNode(text, isCategory, cIdx, parent, pos) {
+    const mesh = makeMesh(isCategory, cIdx);
+    mesh.position.copy(pos);
+    const seq = nodeSeq++;
+    mesh.userData = {
+      text, isCategory, cIdx, label: createLabel(text, isCategory, cIdx),
+      floatOff: seq * 1.17,
+      floatSpd: isCategory ? .2 : .32,
+      originY: pos.y,
+      rotSpY: (seq % 5 - 2) * (isCategory ? .0018 : .0035),
+    };
+    scene.add(mesh);
+    nodes.push(mesh);
+    if (parent) addConnection(mesh, parent);
+    return mesh;
+  }
+
+  /* 예시 장면: 월드 좌표 고정 (캡처마다 동일) */
+  const demo = [
+    {
+      cat: '미래의 막막함',
+      pos: new THREE.Vector3(-6.2, 1.4, 1.8),
+      cIdx: 0,
+      thoughts: [
+        { t: '앞이 잘 안 보여요', pos: new THREE.Vector3(-3.4, 2.5, 4) },
+        { t: '선택을 미루게 돼요', pos: new THREE.Vector3(-5, -0.5, 5) },
+        { t: '불안이 자꾸 올라와요', pos: new THREE.Vector3(-8.8, 0.8, 2.6) },
+      ],
+    },
+    {
+      cat: '관계의 온도',
+      pos: new THREE.Vector3(5.8, -0.6, 0.5),
+      cIdx: 1,
+      thoughts: [
+        { t: '연락이 뜸해진 친구', pos: new THREE.Vector3(8.4, 1.4, 2.6) },
+        { t: '말하기 어려운 마음', pos: new THREE.Vector3(7.2, -2.2, -1.4) },
+        { t: '외로움이 밀려와요', pos: new THREE.Vector3(4, 1.6, -3.8) },
+      ],
+    },
+    {
+      cat: '나 자신에게',
+      pos: new THREE.Vector3(0.2, 4.2, -4.5),
+      cIdx: 2,
+      thoughts: [
+        { t: '조금만 쉬어도 될까요', pos: new THREE.Vector3(3, 5.6, -2.6) },
+        { t: '충분히 하고 있다고', pos: new THREE.Vector3(-2.8, 5.9, -3.4) },
+      ],
+    },
+  ];
+
+  demo.forEach((d) => {
+    const cat = addNode(d.cat, true, d.cIdx, null, d.pos);
+    d.thoughts.forEach((th) => {
+      addNode(th.t, false, d.cIdx, cat, th.pos);
+    });
+  });
+
+  function updateLabels() {
+    nodes.forEach((node) => {
+      const lbl = node.userData.label;
+      const v = node.position.clone().project(camera);
+      if (v.z > 1) { lbl.style.display = 'none'; return; }
+      lbl.style.display = 'block';
+      lbl.style.left = ((v.x * .5 + .5) * W) + 'px';
+      lbl.style.top = ((-v.y * .5 + .5) * H) + 'px';
+    });
+  }
+
+  function updateConn() {
+    connections.forEach((c) => {
+      const a = c.a.position, b = c.b.position;
+      const arr = c.geo.attributes.position.array;
+      arr[0] = a.x; arr[1] = a.y; arr[2] = a.z;
+      arr[3] = b.x; arr[4] = b.y; arr[5] = b.z;
+      c.geo.attributes.position.needsUpdate = true;
+    });
+  }
+
+  const clock = new THREE.Clock();
+  function loop() {
+    requestAnimationFrame(loop);
+    const t = clock.getElapsedTime();
+    nodes.forEach((node) => {
+      const { floatOff, floatSpd, originY, rotSpY } = node.userData;
+      node.position.y = originY + Math.sin(t * floatSpd + floatOff) * 0.42;
+      node.rotation.y += rotSpY;
+      const glow = node.children[0];
+      if (glow) glow.material.opacity = (node.userData.isCategory ? .1 : .065) + .035 * Math.sin(t * 1.3 + floatOff);
+    });
+    ctrLight.intensity = 2.35 + 0.5 * Math.sin(t * .65);
+    updateConn();
+    updateLabels();
+    renderer.render(scene, camera);
+  }
+  loop();
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.body.dataset.thumbReady = '1';
+    });
+  });
+  </script>
+</body>
+</html>
