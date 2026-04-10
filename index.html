@@ -656,11 +656,13 @@ html, body {
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   right: calc(14px + env(safe-area-inset-right, 0px));
   z-index: 105;
+  margin: 0;
   font-size: 0;
   line-height: 0;
   font-weight: 400;
   color: rgba(140,130,195,.45);
   pointer-events: none;
+  text-align: right;
 }
 #creator-credit a {
   font-size: 11px;
@@ -671,6 +673,7 @@ html, body {
   text-decoration: none;
   pointer-events: auto;
   transition: text-decoration-color .15s;
+  white-space: nowrap;
 }
 #creator-credit a:hover {
   text-decoration: underline;
@@ -853,8 +856,14 @@ html, body {
 #auth-sync-dot.syncing { display: block; animation: blink-dot .8s ease infinite alternate; }
 @keyframes blink-dot { from{opacity:.3;} to{opacity:1;} }
 
-/* 첫 화면(입력 오버레이): 모바일에서 긴 문장 줄바꿈·여백 */
+/* 첫 화면(입력 오버레이): 모바일에서 긴 문장 줄바꿈·여백 · 하단 크레딧과 겹침 완화 */
 @media (max-width: 560px) {
+  #input-overlay {
+    padding-bottom: max(40px, calc(12px + env(safe-area-inset-bottom, 0px) + 28px));
+  }
+  #creator-credit {
+    max-width: min(200px, calc(100vw - 96px));
+  }
   .input-card {
     width: 94%;
     padding: 24px 18px 22px;
@@ -1428,7 +1437,7 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
     floatOff: Math.random()*Math.PI*2,
     floatSpd: isCategory ? .18+Math.random()*.12 : .28+Math.random()*.22,
     originY: p.y,
-    rotSpY: (Math.random()-.5)*(isCategory?.006:.012),
+    rotSpY: (Math.random()-.5)*(isCategory?.0038:.0075),
     purified: false,
     purifyingAnim: false,
     readyForRelease: false, // category whose children are all purified
@@ -1461,18 +1470,33 @@ function addConnection(a, b, isParent){
   const color  = isParent ? p.glow : 0x334455;
   const opac   = isParent ? .38    : .16;
   const line = new THREE.Line(geo, new THREE.LineBasicMaterial({color,transparent:true,opacity:opac}));
-  line.userData = {nodeA:a, nodeB:b, isParent};
+  line.userData = {nodeA:a, nodeB:b, isParent, elasticPhase:Math.random()*Math.PI*2};
   scene.add(line);
   connections.push(line);
 }
 
-function updateConnections(){
+function updateConnections(elapsed){
+  const t = elapsed !== undefined ? elapsed : clock.getElapsedTime();
   for(let i=connections.length-1;i>=0;i--){
     const c=connections[i], na=c.userData.nodeA, nb=c.userData.nodeB;
     if(na.userData.purified||nb.userData.purified){ scene.remove(c); connections.splice(i,1); continue; }
+    const ax=na.position.x, ay=na.position.y, az=na.position.z;
+    const bx=nb.position.x, by=nb.position.y, bz=nb.position.z;
+    let dx=bx-ax, dy=by-ay, dz=bz-az;
+    const L = Math.hypot(dx,dy,dz);
+    if(L<1e-5){
+      const a=c.geometry.attributes.position.array;
+      a[0]=ax; a[1]=ay; a[2]=az; a[3]=bx; a[4]=by; a[5]=bz;
+      c.geometry.attributes.position.needsUpdate=true;
+      continue;
+    }
+    const inv=1/L;
+    dx*=inv; dy*=inv; dz*=inv;
+    const amp=L*0.021;
+    const eps=amp*Math.sin(t*2.05+(c.userData.elasticPhase||0));
     const a=c.geometry.attributes.position.array;
-    a[0]=na.position.x; a[1]=na.position.y; a[2]=na.position.z;
-    a[3]=nb.position.x; a[4]=nb.position.y; a[5]=nb.position.z;
+    a[0]=ax+dx*eps; a[1]=ay+dy*eps; a[2]=az+dz*eps;
+    a[3]=bx-dx*eps; a[4]=by-dy*eps; a[5]=bz-dz*eps;
     c.geometry.attributes.position.needsUpdate=true;
   }
 }
@@ -1977,7 +2001,7 @@ function cleanupNode(node){
   removeStrokeBadge(node);
   const idx=nodes.indexOf(node);
   if(idx>=0) nodes.splice(idx,1);
-  updateConnections();
+  updateConnections(clock.getElapsedTime());
   updateEmptyState();
   saveData();
 }
@@ -2143,17 +2167,74 @@ function parseStream(rawText){
 
 async function parseStreamWithAI(rawText){
   showToast('✨ 관념을 분석하고 있어요...');
+
+  async function tryLocalApiProxy(){
+    try{
+      const res=await fetch('/api/parse',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:rawText})
+      });
+      if(!res.ok) return null;
+      const data=await res.json();
+      const arr=data.groups;
+      if(!Array.isArray(arr)||arr.length===0) return null;
+      return arr;
+    }catch{ return null; }
+  }
+
+  const h=location.hostname;
+  const onLocalHttp=(location.protocol==='http:'||location.protocol==='https:')&&(h==='localhost'||h==='127.0.0.1');
+  if(onLocalHttp){
+    const viaProxy=await tryLocalApiProxy();
+    if(viaProxy) return viaProxy;
+  }
+
+  const apiKey=localStorage.getItem('openai_api_key');
+  if(!apiKey) return null;
+
   try{
-    const res=await fetch('/api/parse',{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:rawText})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body:JSON.stringify({
+        model:'gpt-4o-mini',
+        temperature:0.3,
+        max_tokens:1000,
+        messages:[
+          {role:'system',content:'당신은 한국어 의식의 흐름 텍스트에서 주요 개념을 구조화하는 도우미입니다.\n'+
+            '- 상위 카테고리(부모)와 구체적인 생각들(자식)을 추출하세요.\n'+
+            '- 반드시 아래 JSON 형식만 출력하세요. 다른 설명·마크다운·코드펜스는 금지입니다.\n'+
+            '{"groups": [{"catName": "카테고리명", "thoughts": ["생각1", "생각2"]}]}\n'+
+            '- catName은 한글 3~10자.\n'+
+            '- 비슷한 생각은 하나의 카테고리로 묶으세요.\n'+
+            '- 카테고리는 최대 6개, 최소 1개.\n'+
+            '- thoughts는 해당 카테고리에 속하는 구체적 문장/구절 배열.\n'+
+            '- 한 덩어리가 길면(쉼표·마침표 없이 이어진 경우) 의미·호흡 단위로 나눠 배열에 여러 문자열로 넣으세요.'},
+          {role:'user',content:rawText}
+        ]
+      })
     });
     if(!res.ok) return null;
     const data=await res.json();
-    const arr=data.groups;
-    if(!Array.isArray(arr)||arr.length===0) return null;
-    return arr;
+    const content=data.choices?.[0]?.message?.content?.trim();
+    if(!content) return null;
+    let jsonStr=content;
+    const fence=content.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
+    if(fence) jsonStr=fence[1].trim();
+    let parsed;
+    try{ parsed=JSON.parse(jsonStr); }
+    catch{ return null; }
+    const arr=parsed.groups;
+    if(!Array.isArray(arr)) return null;
+    const out=arr
+      .filter(g=>g&&typeof g.catName==='string')
+      .map(g=>({
+        catName:g.catName.trim(),
+        thoughts:Array.isArray(g.thoughts)?g.thoughts.filter(t=>typeof t==='string'&&t.trim()).map(t=>t.trim()):[]
+      }))
+      .filter(g=>g.catName.length>0);
+    return out.length?out:null;
   }catch{ return null; }
 }
 
@@ -2227,16 +2308,20 @@ const thoughtInput=document.getElementById('thought-input');
 async function submitStream(andEnter){
   const text=thoughtInput.value.trim();
   if(!text){ thoughtInput.focus(); return; }
-  thoughtInput.value='';
-  if(andEnter) enterSpace();
+  const hadKey=!!localStorage.getItem('openai_api_key');
+  const h=location.hostname;
+  const onLocalHttp=(location.protocol==='http:'||location.protocol==='https:')&&(h==='localhost'||h==='127.0.0.1');
   let groups=null;
   try{ groups=await parseStreamWithAI(text); }catch{ groups=null; }
   if(groups&&groups.length>0){
     showToast('🤖 AI가 관념을 정리했어요');
-  } else {
+  }else{
     groups=parseStream(text);
+    if((hadKey||onLocalHttp)&&groups.length>0) showToast('기본 분석으로 정리했어요');
   }
   if(!groups||groups.length===0) return;
+  thoughtInput.value='';
+  if(andEnter) enterSpace();
   processGroups(groups);
 }
 
@@ -2539,7 +2624,7 @@ function loop(){
   if(autoRotate) camTheta+=.0010;
   updateCamera();
   animateNodes(t);
-  updateConnections();
+  updateConnections(t);
   updateLabels();
   updateHandRotation();
   renderer.render(scene,camera);

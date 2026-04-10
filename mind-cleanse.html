@@ -91,7 +91,12 @@ html, body {
   background: radial-gradient(ellipse at center, rgba(20,0,60,.97) 0%, rgba(0,0,17,.99) 100%);
   transition: opacity .6s, visibility .6s;
 }
-#input-overlay.hidden { opacity: 0; visibility: hidden; }
+#input-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
 
 .input-card {
   width: 92%; max-width: 560px;
@@ -111,7 +116,11 @@ html, body {
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   margin-bottom: 4px;
 }
-.app-subtitle { font-size: 13px; color: rgba(180,160,220,.65); text-align: center; margin-bottom: 22px; }
+.app-subtitle {
+  font-size: 13px; color: rgba(180,160,220,.65); text-align: center; margin-bottom: 22px;
+  max-width: 100%; line-height: 1.55;
+  word-break: keep-all; overflow-wrap: break-word;
+}
 
 .input-section-label {
   font-size: 12px; font-weight: 500; color: rgba(180,160,220,.7);
@@ -140,8 +149,11 @@ html, body {
   box-shadow: 0 0 24px rgba(120,60,255,.14);
 }
 .input-hint {
-  font-size: 11px; color: rgba(160,140,220,.45);
+  font-size: 12px; color: rgba(160,140,220,.68);
   margin-top: 8px; margin-bottom: 2px;
+  max-width: 100%; line-height: 1.55;
+  word-break: keep-all; overflow-wrap: break-word;
+  text-align: center;
 }
 .btn-primary {
   width: 100%; margin-top: 18px; padding: 15px;
@@ -214,6 +226,28 @@ html, body {
   .hud-stat { font-size: 10px; }
   .hud-bar { width: 52px; }
   .hud-div { height: 14px; }
+}
+
+/* 첫 화면(입력 오버레이): 모바일에서 긴 문장 줄바꿈·여백 · 하단 크레딧과 겹침 완화 */
+@media (max-width: 560px) {
+  #input-overlay {
+    padding-bottom: max(40px, calc(12px + env(safe-area-inset-bottom, 0px) + 28px));
+  }
+  #creator-credit {
+    max-width: min(200px, calc(100vw - 96px));
+  }
+  .input-card {
+    width: 94%;
+    padding: 24px 18px 22px;
+    border-radius: 20px;
+  }
+  .app-logo { font-size: 28px; margin-bottom: 4px; }
+  .app-title { font-size: 20px; line-height: 1.35; padding: 0 2px; }
+  .app-subtitle { font-size: 12.5px; margin-bottom: 18px; padding: 0 4px; }
+  .input-section-label { padding: 0 2px; }
+  #thought-input { min-height: 160px; font-size: 14px; padding: 14px 14px; }
+  .input-hint { font-size: 11.5px; padding: 0 2px; margin-top: 10px; }
+  .btn-primary { margin-top: 14px; padding: 14px; font-size: 14px; }
 }
 
 /* ==================== DETAIL PANEL (우측 · 세로 중앙) ==================== */
@@ -642,11 +676,13 @@ html, body {
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   right: calc(14px + env(safe-area-inset-right, 0px));
   z-index: 105;
+  margin: 0;
   font-size: 0;
   line-height: 0;
   font-weight: 400;
   color: rgba(140,130,195,.45);
   pointer-events: none;
+  text-align: right;
 }
 #creator-credit a {
   font-size: 11px;
@@ -657,6 +693,7 @@ html, body {
   text-decoration: none;
   pointer-events: auto;
   transition: text-decoration-color .15s;
+  white-space: nowrap;
 }
 #creator-credit a:hover {
   text-decoration: underline;
@@ -1357,7 +1394,7 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
     floatOff: Math.random()*Math.PI*2,
     floatSpd: isCategory ? .18+Math.random()*.12 : .28+Math.random()*.22,
     originY: p.y,
-    rotSpY: (Math.random()-.5)*(isCategory?.006:.012),
+    rotSpY: (Math.random()-.5)*(isCategory?.0038:.0075),
     purified: false,
     purifyingAnim: false,
     readyForRelease: false, // category whose children are all purified
@@ -1390,18 +1427,33 @@ function addConnection(a, b, isParent){
   const color  = isParent ? p.glow : 0x334455;
   const opac   = isParent ? .38    : .16;
   const line = new THREE.Line(geo, new THREE.LineBasicMaterial({color,transparent:true,opacity:opac}));
-  line.userData = {nodeA:a, nodeB:b, isParent};
+  line.userData = {nodeA:a, nodeB:b, isParent, elasticPhase:Math.random()*Math.PI*2};
   scene.add(line);
   connections.push(line);
 }
 
-function updateConnections(){
+function updateConnections(elapsed){
+  const t = elapsed !== undefined ? elapsed : clock.getElapsedTime();
   for(let i=connections.length-1;i>=0;i--){
     const c=connections[i], na=c.userData.nodeA, nb=c.userData.nodeB;
     if(na.userData.purified||nb.userData.purified){ scene.remove(c); connections.splice(i,1); continue; }
+    const ax=na.position.x, ay=na.position.y, az=na.position.z;
+    const bx=nb.position.x, by=nb.position.y, bz=nb.position.z;
+    let dx=bx-ax, dy=by-ay, dz=bz-az;
+    const L = Math.hypot(dx,dy,dz);
+    if(L<1e-5){
+      const a=c.geometry.attributes.position.array;
+      a[0]=ax; a[1]=ay; a[2]=az; a[3]=bx; a[4]=by; a[5]=bz;
+      c.geometry.attributes.position.needsUpdate=true;
+      continue;
+    }
+    const inv=1/L;
+    dx*=inv; dy*=inv; dz*=inv;
+    const amp=L*0.021;
+    const eps=amp*Math.sin(t*2.05+(c.userData.elasticPhase||0));
     const a=c.geometry.attributes.position.array;
-    a[0]=na.position.x; a[1]=na.position.y; a[2]=na.position.z;
-    a[3]=nb.position.x; a[4]=nb.position.y; a[5]=nb.position.z;
+    a[0]=ax+dx*eps; a[1]=ay+dy*eps; a[2]=az+dz*eps;
+    a[3]=bx-dx*eps; a[4]=by-dy*eps; a[5]=bz-dz*eps;
     c.geometry.attributes.position.needsUpdate=true;
   }
 }
@@ -1890,7 +1942,7 @@ function cleanupNode(node){
   removeStrokeBadge(node);
   const idx=nodes.indexOf(node);
   if(idx>=0) nodes.splice(idx,1);
-  updateConnections();
+  updateConnections(clock.getElapsedTime());
   updateEmptyState();
   saveData();
 }
@@ -2477,7 +2529,7 @@ function loop(){
   if(autoRotate) camTheta+=.0010;
   updateCamera();
   animateNodes(t);
-  updateConnections();
+  updateConnections(t);
   updateLabels();
   updateHandRotation();
   renderer.render(scene,camera);
