@@ -13,14 +13,18 @@
 /* ==================== BASE ==================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
-  width: 100%; height: 100%; overflow: hidden;
+  width: 100%; height: 100%; min-height: 100dvh; overflow: hidden;
   background: #000011;
   font-family: 'Noto Sans KR', sans-serif;
   color: #e0e0ff;
 }
-#three-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+#three-canvas {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  min-height: 100dvh; display: block;
+}
 #labels-container {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  min-height: 100dvh;
   pointer-events: none; z-index: 10;
 }
 
@@ -1275,13 +1279,28 @@ const canvas = document.getElementById('three-canvas');
 const scene   = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x000011, 0.012);
 
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
 camera.position.set(0, 8, 28);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
 renderer.setClearColor(0x000011, 1);
+
+/* 캔버스 CSS 크기(clientWidth/Height)와 카메라·렌더 버퍼를 항상 일치 — 모바일 주소창/inner* 불일치로 라벨이 한쪽에 몰리는 현상 방지 */
+let _syncW = 0, _syncH = 0;
+function syncCanvasAndCamera(){
+  const w = Math.max(8, canvas.clientWidth | 0);
+  const h = Math.max(8, canvas.clientHeight | 0);
+  if(w === _syncW && h === _syncH) return;
+  _syncW = w;
+  _syncH = h;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+canvas.style.width = '100%';
+canvas.style.height = '100%';
+syncCanvasAndCamera();
 
 /* Lights */
 const ambLight   = new THREE.AmbientLight(0x1a0a33, 3);
@@ -1426,11 +1445,13 @@ function makeMesh(isCategory, cIdx){
 const CHILD_ORBIT_GOLD = Math.PI * (3 - Math.sqrt(5));
 function childOrbitOffset(siblingIndex){
   const i = Math.max(0, siblingIndex | 0);
-  const baseR = 2.4;
-  const stepR = 0.82;
+  const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
+  const spread = narrow ? 1.2 : 1;
+  const baseR = 3.15 * spread;
+  const stepR = 1.05 * spread;
   const r = baseR + Math.sqrt(i + 1) * stepR;
   const ang = i * CHILD_ORBIT_GOLD;
-  const y = Math.sin(i * 1.73) * 1.35;
+  const y = Math.sin(i * 1.73) * (1.85 * spread);
   return new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r);
 }
 
@@ -1440,16 +1461,19 @@ function spawnPos(isCategory, parentMesh, siblingIndex){
     const off = childOrbitOffset(siblingIndex == null ? 0 : siblingIndex);
     return new THREE.Vector3(pp.x + off.x, pp.y + off.y, pp.z + off.z);
   }
+  const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
+  const spread = narrow ? 1.22 : 1;
   const ga = Math.PI*(3-Math.sqrt(5));
   const i = nodes.filter(n=>n.userData.isCategory).length+1;
-  const r = 6+Math.sqrt(i)*4;
-  const th = i*ga + Math.random()*.6;
-  return new THREE.Vector3(Math.cos(th)*r, (Math.random()-.5)*16, Math.sin(th)*r);
+  const r = (7.8 + Math.sqrt(i) * 5.4) * spread;
+  const th = i * ga;
+  const yBand = Math.sin(i * 2.513) * (9.5 * spread);
+  return new THREE.Vector3(Math.cos(th) * r, yBand + (Math.random() - 0.5) * 4, Math.sin(th) * r);
 }
 
-function reflowChildOrbitsAroundParents(){
+function reflowChildOrbitsAroundParents(elapsed){
   if(typeof clock==='undefined'||!clock) return;
-  const t = clock.getElapsedTime();
+  const t = elapsed !== undefined ? elapsed : clock.getElapsedTime();
   nodes.filter(n=>n.userData.isCategory&&!n.userData.purified).forEach(cat=>{
     const kids=nodes.filter(n=>n.userData.parentId===cat.userData.id&&!n.userData.purified&&!n.userData.isCategory)
       .sort((a,b)=>a.userData.id-b.userData.id);
@@ -1556,6 +1580,7 @@ function updateConnections(elapsed){
    LABELS
    ================================================================ */
 const labelsEl = document.getElementById('labels-container');
+const _lblWorld = new THREE.Vector3();
 
 function createLabel(text, isCategory, ci){
   const p = pal(ci);
@@ -1592,33 +1617,43 @@ function removeStrokeBadge(node){
 }
 
 function updateLabels(){
+  const rect = canvas.getBoundingClientRect();
+  const rw = rect.width;
+  const rh = rect.height;
+  if(rw < 4 || rh < 4) return;
   nodes.forEach(node => {
-    // Main label
     const lbl = node.userData.label;
-    if(lbl){
-      if(node.userData.purified){ lbl.style.display='none'; }
+    const badge = node.userData.strokeBadge;
+    if(lbl && node.userData.purified){ lbl.style.display='none'; }
+    if(badge && (node.userData.purified||pettingNode!==node)){ badge.style.display='none'; }
+
+    const wantLbl = lbl && !node.userData.purified;
+    const wantBadge = badge && !node.userData.purified && pettingNode===node;
+    if(!wantLbl && !wantBadge) return;
+
+    node.updateMatrixWorld(true);
+    node.getWorldPosition(_lblWorld);
+    _lblWorld.project(camera);
+    const behind = _lblWorld.z > 1;
+    const sx = rect.left + (_lblWorld.x * .5 + .5) * rw;
+    const sy = rect.top  + (-_lblWorld.y * .5 + .5) * rh;
+
+    if(wantLbl){
+      if(behind){ lbl.style.display='none'; }
       else {
-        const v = node.position.clone().project(camera);
-        if(v.z>1){ lbl.style.display='none'; }
-        else {
-          lbl.style.display='block';
-          lbl.style.left=((v.x*.5+.5)*innerWidth)+'px';
-          lbl.style.top =((-v.y*.5+.5)*innerHeight)+'px';
-        }
+        lbl.style.display='block';
+        lbl.style.left = sx + 'px';
+        lbl.style.top  = sy + 'px';
       }
     }
-    // Stroke badge (only visible while petting this node)
-    const badge = node.userData.strokeBadge;
-    if(badge){
-      if(node.userData.purified||pettingNode!==node){ badge.style.display='none'; return; }
-      const v = node.position.clone().project(camera);
-      if(v.z>1){ badge.style.display='none'; }
+    if(wantBadge){
+      if(behind){ badge.style.display='none'; }
       else {
         badge.style.display='block';
-        badge.style.left=((v.x*.5+.5)*innerWidth)+'px';
-        badge.style.top =((-v.y*.5+.5)*innerHeight)+'px';
-        const needed = node.userData.stages*10;
-        badge.textContent=`✋ ${node.userData.strokeCount}/${needed}`;
+        badge.style.left = sx + 'px';
+        badge.style.top  = sy + 'px';
+        const needed = node.userData.stages * 10;
+        badge.textContent = `✋ ${node.userData.strokeCount}/${needed}`;
       }
     }
   });
@@ -1648,8 +1683,11 @@ const mouseV = new THREE.Vector2();
 
 function getNodeAt(cx, cy){
   const rect=canvas.getBoundingClientRect();
-  mouseV.x=((cx-rect.left)/rect.width)*2-1;
-  mouseV.y=-((cy-rect.top)/rect.height)*2+1;
+  const rw = rect.width;
+  const rh = rect.height;
+  if(rw < 4 || rh < 4) return null;
+  mouseV.x=((cx-rect.left)/rw)*2-1;
+  mouseV.y=-((cy-rect.top)/rh)*2+1;
   raycaster.setFromCamera(mouseV, camera);
   const active=nodes.filter(n=>!n.userData.purified&&!n.userData.purifyingAnim);
   const hits=raycaster.intersectObjects(active, false);
@@ -1658,10 +1696,12 @@ function getNodeAt(cx, cy){
   const narrow = innerWidth <= 560;
   let closest=null, best=Infinity;
   active.forEach(node=>{
-    const v=node.position.clone().project(camera);
-    if(v.z>1) return;
-    const sx=(v.x*.5+.5)*innerWidth;
-    const sy=(-v.y*.5+.5)*innerHeight;
+    node.updateMatrixWorld(true);
+    node.getWorldPosition(_lblWorld);
+    _lblWorld.project(camera);
+    if(_lblWorld.z>1) return;
+    const sx=rect.left+(_lblWorld.x*.5+.5)*rw;
+    const sy=rect.top +(-_lblWorld.y*.5+.5)*rh;
     const d=Math.hypot(cx-sx, cy-sy);
     const lim=narrow
       ? (node.userData.isCategory ? 56 : 84)
@@ -2645,10 +2685,9 @@ function updateEmptyState(){
    ANIMATION
    ================================================================ */
 function animateNodes(t){
-  nodes.forEach(node=>{
+  const stepNode = (node)=>{
     if(node.userData.purifyingAnim||node.userData.purified) return;
 
-    // Gravity: category sinks based on child count
     let gravityY=0;
     if(node.userData.isCategory){
       const childCount=nodes.filter(n=>n.userData.parentId===node.userData.id&&!n.userData.purified).length;
@@ -2659,14 +2698,12 @@ function animateNodes(t){
     node.position.y = originY + gravityY + Math.sin(t*floatSpd+floatOff)*0.45;
     node.rotation.y += rotSpY;
 
-    // Subtle glow pulse
     const glow=node.children[0];
     if(glow&&pettingNode!==node){
       const skipPulse=selectedNode===node&&!node.userData.isCategory;
       if(!skipPulse) glow.material.opacity=.06+.04*Math.sin(t*1.4+floatOff);
     }
 
-    // Wobble during petting
     if(pettingNode===node && node.userData.wobbleMag){
       node.rotation.z=Math.sin(t*15)*node.userData.wobbleMag;
       node.userData.wobbleMag*=.88;
@@ -2674,11 +2711,14 @@ function animateNodes(t){
       node.rotation.z*=.85;
     }
 
-    // Scale lerp
     const isSel=selectedNode===node, isHov=hoveredNode===node&&pettingNode!==node;
     const ts=isSel?1.15:isHov?1.08:1.0;
     node.scale.lerp(new THREE.Vector3(ts,ts,ts),.1);
-  });
+  };
+
+  nodes.forEach(node=>{ if(node.userData.isCategory) stepNode(node); });
+  reflowChildOrbitsAroundParents(t);
+  nodes.forEach(node=>{ if(!node.userData.isCategory) stepNode(node); });
 
   ctrLight.intensity=2.2+.45*Math.sin(t*.7);
 }
@@ -2686,15 +2726,17 @@ function animateNodes(t){
 /* ================================================================
    RESIZE / LOOP / INIT
    ================================================================ */
-window.addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-});
+function onViewportResize(){ syncCanvasAndCamera(); }
+window.addEventListener('resize', onViewportResize);
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', onViewportResize);
+  window.visualViewport.addEventListener('scroll', onViewportResize);
+}
 
 const clock=new THREE.Clock();
 function loop(){
   requestAnimationFrame(loop);
+  syncCanvasAndCamera();
   const t=clock.getElapsedTime();
   if(autoRotate) camTheta+=.0010;
   updateCamera();
