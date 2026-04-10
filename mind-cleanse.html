@@ -1435,19 +1435,21 @@ function countActiveMarbles(){
 /** 장면에 남은 구슬이 많을수록 궤도·큰 구슬 간격을 넓혀 겹침 완화 (적을 땐 과도하게 벌리지 않음) */
 function marbleLayoutScale(){
   const n = Math.max(1, countActiveMarbles());
-  const ref = 14;
+  const ref = 11;
   const raw = Math.sqrt(n / ref);
-  return Math.min(2.15, Math.max(0.88, raw));
+  return Math.min(2.55, Math.max(0.93, raw));
 }
 
 function childOrbitOffset(siblingIndex){
   const i = Math.max(0, siblingIndex | 0);
+  const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
+  const spread = narrow ? 1.2 : 1;
   const d = marbleLayoutScale();
-  const baseR = 2.4 * d;
-  const stepR = 0.82 * d;
+  const baseR = 3.95 * spread * d;
+  const stepR = 1.34 * spread * d;
   const r = baseR + Math.sqrt(i + 1) * stepR;
   const ang = i * CHILD_ORBIT_GOLD;
-  const y = Math.sin(i * 1.73) * 1.35 * d;
+  const y = Math.sin(i * 1.73) * (2.35 * spread * d);
   return new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r);
 }
 
@@ -1457,13 +1459,16 @@ function spawnPos(isCategory, parentMesh, siblingIndex){
     const off = childOrbitOffset(siblingIndex == null ? 0 : siblingIndex);
     return new THREE.Vector3(pp.x + off.x, pp.y + off.y, pp.z + off.z);
   }
+  const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
+  const spread = narrow ? 1.22 : 1;
   const d = marbleLayoutScale();
   const ga = Math.PI*(3-Math.sqrt(5));
   const i = nodes.filter(n=>n.userData.isCategory).length+1;
-  const r = (4+Math.sqrt(i)*3) * d;
+  const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d;
   const th = i*ga + Math.random()*.6;
-  const yJ = (Math.random()-.5)*14 * Math.min(1.25, d);
-  return new THREE.Vector3(Math.cos(th)*r, yJ, Math.sin(th)*r);
+  const yBand = Math.sin(i * 2.513) * (12 * spread * d);
+  const yJ = (Math.random()-.5)*5.4 * Math.min(1.32, d);
+  return new THREE.Vector3(Math.cos(th)*r, yBand+yJ, Math.sin(th)*r);
 }
 
 /** 저장된 좌표와 무관하게, 루트 카테고리를 현재 구슬 수에 맞는 나선으로 둠 */
@@ -1474,13 +1479,15 @@ function reflowRootCategorySpiral(t){
     n.userData.isCategory && !n.userData.purified && n.userData.parentId == null
   ).sort((a,b)=>a.userData.id-b.userData.id);
   if(!roots.length) return;
+  const narrow = typeof innerWidth === 'number' && innerWidth <= 560;
+  const spread = narrow ? 1.22 : 1;
   const d = marbleLayoutScale();
   const ga = Math.PI*(3-Math.sqrt(5));
   roots.forEach((node, idx)=>{
     const i = idx + 1;
-    const r = (4+Math.sqrt(i)*3) * d;
+    const r = (9.6 + Math.sqrt(i) * 6.5) * spread * d;
     const th = i * ga;
-    const yBand = Math.sin(i * 2.513) * (7 * Math.min(1.15, d));
+    const yBand = Math.sin(i * 2.513) * (12 * spread * d);
     const childCount = nodes.filter(n=>n.userData.parentId===node.userData.id&&!n.userData.purified).length;
     const gravityY = -Math.min(11, childCount*0.42);
     const bob = Math.sin(tt*node.userData.floatSpd+node.userData.floatOff)*0.45;
@@ -1512,7 +1519,7 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
   const ci = (cIdx!==undefined&&cIdx>=0) ? cIdx
            : isCategory ? (colorIdx++%PALETTE.length)
            : (parentMesh ? parentMesh.userData.cIdx : colorIdx%PALETTE.length);
-  const {mesh, r: sphereR} = makeMesh(isCategory, ci);
+  const {mesh} = makeMesh(isCategory, ci);
   let p = pos;
   if(!p && parentMesh){
     const sib=nodes.filter(n=>n.userData.parentId===parentMesh.userData.id&&!n.userData.purified).length;
@@ -1524,7 +1531,7 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
 
   const id = nodeIdSeq++;
   mesh.userData = {
-    text, isCategory, cIdx: ci, sphereR,
+    text, isCategory, cIdx: ci,
     parentId: parentMesh ? parentMesh.userData.id : null,
     id,
     stages: 1,       // purification stages (can increment if thought recurring)
@@ -1559,33 +1566,15 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
   return mesh;
 }
 
-const ROPE_SEG = 28;
 function addConnection(a, b, isParent){
-  const positions = new Float32Array(ROPE_SEG * 3);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const geo = new THREE.BufferGeometry().setFromPoints([a.position.clone(), b.position.clone()]);
   const p = pal(a.userData.cIdx);
   const color  = isParent ? p.glow : 0x334455;
-  const opac   = isParent ? .42    : .18;
+  const opac   = isParent ? .38    : .16;
   const line = new THREE.Line(geo, new THREE.LineBasicMaterial({color,transparent:true,opacity:opac}));
-  line.userData = {
-    nodeA:a, nodeB:b, isParent, ropeSeg:ROPE_SEG,
-    ropePh:{
-      e:Math.random()*Math.PI*2, ax:Math.random()*Math.PI*2, st:Math.random()*Math.PI*2,
-      sg:Math.random()*Math.PI*2, r1:Math.random()*Math.PI*2, r2:Math.random()*Math.PI*2, r3:Math.random()*Math.PI*2,
-    },
-    ropeFq:{
-      st:1.55+Math.random()*.75, sg:1.35+Math.random()*.65, rp:2.1+Math.random()*1.1,
-    },
-  };
+  line.userData = {nodeA:a, nodeB:b, isParent, elasticPhase:Math.random()*Math.PI*2};
   scene.add(line);
   connections.push(line);
-}
-
-function nodeSphereRadius(n){
-  const s = n.userData.sphereR;
-  if(s != null && s > 0) return s;
-  return n.userData.isCategory ? 1.175 : 0.49;
 }
 
 function updateConnections(elapsed){
@@ -1593,57 +1582,23 @@ function updateConnections(elapsed){
   for(let i=connections.length-1;i>=0;i--){
     const c=connections[i], na=c.userData.nodeA, nb=c.userData.nodeB;
     if(na.userData.purified||nb.userData.purified){ scene.remove(c); connections.splice(i,1); continue; }
-    let ax=na.position.x, ay=na.position.y, az=na.position.z;
-    let bx=nb.position.x, by=nb.position.y, bz=nb.position.z;
+    const ax=na.position.x, ay=na.position.y, az=na.position.z;
+    const bx=nb.position.x, by=nb.position.y, bz=nb.position.z;
     let dx=bx-ax, dy=by-ay, dz=bz-az;
-    let L = Math.hypot(dx,dy,dz);
-    if(L>1e-5){
-      const ra = nodeSphereRadius(na), rb = nodeSphereRadius(nb);
-      const inv=1/L;
-      const ux=dx*inv, uy=dy*inv, uz=dz*inv;
-      ax += ux*ra; ay += uy*ra; az += uz*ra;
-      bx -= ux*rb; by -= uy*rb; bz -= uz*rb;
-      dx=bx-ax; dy=by-ay; dz=bz-az;
-      L = Math.hypot(dx,dy,dz);
-    }
-    const arr=c.geometry.attributes.position.array;
-    const seg=c.userData.ropeSeg||2;
+    const L = Math.hypot(dx,dy,dz);
     if(L<1e-5){
-      for(let j=0;j<seg;j++){ arr[j*3]=ax; arr[j*3+1]=ay; arr[j*3+2]=az; }
+      const a=c.geometry.attributes.position.array;
+      a[0]=ax; a[1]=ay; a[2]=az; a[3]=bx; a[4]=by; a[5]=bz;
       c.geometry.attributes.position.needsUpdate=true;
       continue;
     }
     const inv=1/L;
     dx*=inv; dy*=inv; dz*=inv;
-    let px=-dz, py=0, pz=dx;
-    let pl=Math.hypot(px,py,pz);
-    if(pl<1e-6){ px=0; py=1; pz=0; pl=1; }
-    px/=pl; py/=pl; pz/=pl;
-    let qx=dy*pz-dz*py, qy=dz*px-dx*pz, qz=dx*py-dy*px;
-    let ql=Math.hypot(qx,qy,qz); qx/=ql; qy/=ql; qz/=ql;
-    let gx=dx*dy, gy=-1+dy*dy, gz=dz*dy;
-    let gl=Math.hypot(gx,gy,gz);
-    if(gl<1e-5){ gx=px; gy=py; gz=pz; gl=1; }
-    gx/=gl; gy/=gl; gz/=gl;
-    const ph=c.userData.ropePh||{};
-    const fq=c.userData.ropeFq||{st:1.8,sg:1.6,rp:2.6};
-    const sm=seg-1;
-    for(let j=0;j<seg;j++){
-      const u=sm>0?j/sm:0;
-      const k=Math.sin(Math.PI*u);
-      const k2=k*k;
-      const axial=L*0.052*Math.sin(t*2.05+ph.e)*k*Math.sin(u*11.3+ph.ax);
-      const breathe=L*0.028*Math.sin(t*fq.st+ph.st)*Math.sin(2*Math.PI*u*2.1+ph.ax);
-      let sx=ax+dx*L*u+dx*axial+dx*breathe*0.55;
-      let sy=ay+dy*L*u+dy*axial+dy*breathe*0.55;
-      let sz=az+dz*L*u+dz*axial+dz*breathe*0.55;
-      const sag=L*k2*(0.26+0.18*Math.sin(t*fq.sg+ph.sg));
-      sx+=gx*sag; sy+=gy*sag; sz+=gz*sag;
-      const w=L*k*(0.095*Math.sin(t*fq.rp+ph.r1+u*6.2)+0.065*Math.sin(t*fq.rp*1.41+ph.r2+u*9.5));
-      const w2=L*k*0.052*Math.sin(t*1.72+ph.r3+u*4.35);
-      sx+=px*w+qx*w2; sy+=py*w+qy*w2; sz+=pz*w+qz*w2;
-      arr[j*3]=sx; arr[j*3+1]=sy; arr[j*3+2]=sz;
-    }
+    const amp=L*0.032;
+    const eps=amp*Math.sin(t*2.12+(c.userData.elasticPhase||0));
+    const a=c.geometry.attributes.position.array;
+    a[0]=ax+dx*eps; a[1]=ay+dy*eps; a[2]=az+dz*eps;
+    a[3]=bx-dx*eps; a[4]=by-dy*eps; a[5]=bz-dz*eps;
     c.geometry.attributes.position.needsUpdate=true;
   }
 }
@@ -2738,7 +2693,6 @@ function saveData(){
       text:n.userData.text, isCategory:n.userData.isCategory,
       cIdx:n.userData.cIdx, parentId:n.userData.parentId, id:n.userData.id,
       stages:n.userData.stages, strokeCount:n.userData.strokeCount,
-      sphereR:n.userData.sphereR,
       pos:[n.position.x,n.position.y,n.position.z]
     }))
   };
@@ -2759,7 +2713,6 @@ function loadData(){
       const m=addNode(nd.text,nd.isCategory,nd.cIdx,null,new THREE.Vector3(...nd.pos));
       m.userData.id=nd.id; m.userData.parentId=nd.parentId;
       m.userData.stages=nd.stages||1; m.userData.strokeCount=nd.strokeCount||0;
-      if(nd.sphereR!=null&&nd.sphereR>0) m.userData.sphereR=nd.sphereR;
       idMap[nd.id]=m; if(nd.id>=nodeIdSeq) nodeIdSeq=nd.id+1;
     });
     // Rebuild parent connections
@@ -2946,7 +2899,6 @@ async function loadFromCloud(){
         const m = addNode(nd.text, nd.isCategory, nd.cIdx, null, new THREE.Vector3(...nd.pos));
         m.userData.id = nd.id; m.userData.parentId = nd.parentId;
         m.userData.stages = nd.stages||1; m.userData.strokeCount = nd.strokeCount||0;
-        if(nd.sphereR!=null&&nd.sphereR>0) m.userData.sphereR=nd.sphereR;
         idMap[nd.id] = m; if(nd.id >= nodeIdSeq) nodeIdSeq = nd.id+1;
       });
       data.nodes.forEach(nd=>{
