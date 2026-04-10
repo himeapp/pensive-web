@@ -366,6 +366,59 @@ html, body {
   padding: 0;
 }
 
+#ai-message:not(.hidden) {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background .25s ease, text-shadow .25s ease;
+}
+#ai-message:not(.hidden):active {
+  background: linear-gradient(
+    105deg,
+    rgba(255, 236, 210, 0.16) 0%,
+    rgba(255, 244, 228, 0.08) 38%,
+    transparent 62%
+  );
+}
+
+.warm-ray-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  overflow: hidden;
+}
+.warm-ray-slab {
+  position: absolute;
+  inset: -10%;
+  opacity: 0;
+  mix-blend-mode: screen;
+  will-change: opacity, filter, transform;
+}
+.warm-ray-overlay.playing .warm-ray-slab {
+  animation: warm-ray-fade var(--wro-dur, 2s) ease-out var(--wro-delay, 0s) both;
+}
+@keyframes warm-ray-fade {
+  0% {
+    opacity: 0;
+    filter: blur(24px) saturate(1.06);
+    transform: scale(1.05) rotate(var(--wro-spin, 0deg));
+  }
+  24% {
+    opacity: 1;
+    filter: blur(7px) saturate(1.18);
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.9;
+    filter: blur(2px) saturate(1.22);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(32px) saturate(1);
+    transform: scale(1.1) rotate(var(--wro-spin, 0deg));
+  }
+}
+
 .btn-dp-close {
   width: 100%;
   margin-top: 0;
@@ -970,6 +1023,11 @@ html, body {
 
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
 <div id="toast"></div>
+<div id="warm-ray-overlay" class="warm-ray-overlay" aria-hidden="true">
+  <div class="warm-ray-slab"></div>
+  <div class="warm-ray-slab"></div>
+  <div class="warm-ray-slab"></div>
+</div>
 
 <p id="creator-credit"><a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
 
@@ -1073,6 +1131,44 @@ const PURIFY_MSGS = [
   '있는 그대로 관찰해보세요',
   '다 이유가 있을 거예요',
 ];
+
+function playWarmRayBurst(){
+  const root=document.getElementById('warm-ray-overlay');
+  if(!root) return;
+  root.classList.remove('playing');
+  void root.offsetWidth;
+  const r=Math.random;
+  const edge=Math.floor(r()*4);
+  let bx, by;
+  if(edge===0){ bx=6+r()*88; by=-8-r()*20; }
+  else if(edge===1){ bx=6+r()*88; by=102+r()*22; }
+  else if(edge===2){ bx=-8-r()*18; by=6+r()*88; }
+  else { bx=100+r()*18; by=6+r()*88; }
+  const slabs=root.querySelectorAll('.warm-ray-slab');
+  let maxEnd=0;
+  slabs.forEach((slab,i)=>{
+    const hx=bx+(r()*24-12);
+    const hy=by+(r()*24-12);
+    const w=62+r()*58;
+    const h=48+r()*48;
+    const a0=0.38+r()*0.32;
+    const a1=0.12+r()*0.14;
+    let hue=26+Math.floor(r()*40);
+    if(i===1&&r()>0.48) hue=262+Math.floor(r()*28);
+    else if(i===2&&r()>0.62) hue=188+Math.floor(r()*24);
+    slab.style.backgroundImage=
+      `radial-gradient(ellipse ${w}% ${h}% at ${hx}% ${hy}%, hsla(${hue},${86+i*2}%,${78-i*3}%,${a0}) 0%, hsla(${hue},72%,56%,${a1}) 42%, transparent 72%)`;
+    const dur=1.25+r()*1.45;
+    const delay=i*(0.04+r()*0.09);
+    slab.style.setProperty('--wro-dur', dur.toFixed(3)+'s');
+    slab.style.setProperty('--wro-delay', delay.toFixed(3)+'s');
+    slab.style.setProperty('--wro-spin', ((r()*2.8-1.4)*(i+1)).toFixed(2)+'deg');
+    maxEnd=Math.max(maxEnd, dur+delay);
+  });
+  root.classList.add('playing');
+  clearTimeout(root._warmRayT);
+  root._warmRayT=setTimeout(()=>{ root.classList.remove('playing'); }, maxEnd*1000+380);
+}
 
 /* ================================================================
    SCENE
@@ -2143,6 +2239,11 @@ addChildInput.addEventListener('keydown',e=>{
 });
 
 document.getElementById('close-panel-btn').addEventListener('click',deselectNode);
+document.getElementById('ai-message').addEventListener('click',()=>{
+  const m=document.getElementById('ai-message');
+  if(m.classList.contains('hidden')||!String(m.textContent||'').trim()) return;
+  playWarmRayBurst();
+});
 document.getElementById('dp-add-child-btn').addEventListener('click',()=>{
   if(!selectedNode||!selectedNode.userData.isCategory) return;
   openAddChildModal(selectedNode);
@@ -2552,6 +2653,10 @@ async function loadFromCloud(){
     if (!multi) return;
     multi = false;
     [80, 240, 600].forEach(function(ms){ setTimeout(refresh, ms); });
+  }, { passive: true });
+  document.addEventListener('gestureend', function(e){
+    if (e.scale != null && Math.abs(e.scale - 1) > 0.02)
+      [40, 200, 500].forEach(function(ms){ setTimeout(refresh, ms); });
   }, { passive: true });
   btn.addEventListener('click', function(){
     viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover');
