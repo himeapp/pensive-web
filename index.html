@@ -21,6 +21,9 @@ html, body {
 #three-canvas {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   min-height: 100dvh; display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 #labels-container {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -1532,7 +1535,7 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
   const ci = (cIdx!==undefined&&cIdx>=0) ? cIdx
            : isCategory ? (colorIdx++%PALETTE.length)
            : (parentMesh ? parentMesh.userData.cIdx : colorIdx%PALETTE.length);
-  const {mesh} = makeMesh(isCategory, ci);
+  const {mesh, r: sphereR} = makeMesh(isCategory, ci);
   let p = pos;
   if(!p && parentMesh){
     const sib=nodes.filter(n=>n.userData.parentId===parentMesh.userData.id&&!n.userData.purified).length;
@@ -1544,7 +1547,7 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
 
   const id = nodeIdSeq++;
   mesh.userData = {
-    text, isCategory, cIdx: ci,
+    text, isCategory, cIdx: ci, sphereR,
     parentId: parentMesh ? parentMesh.userData.id : null,
     id,
     stages: 1,       // purification stages (can increment if thought recurring)
@@ -1579,7 +1582,7 @@ function addNode(text, isCategory, cIdx, parentMesh, pos){
   return mesh;
 }
 
-const ROPE_SEG = 20;
+const ROPE_SEG = 28;
 function addConnection(a, b, isParent){
   const positions = new Float32Array(ROPE_SEG * 3);
   const geo = new THREE.BufferGeometry();
@@ -1602,15 +1605,30 @@ function addConnection(a, b, isParent){
   connections.push(line);
 }
 
+function nodeSphereRadius(n){
+  const s = n.userData.sphereR;
+  if(s != null && s > 0) return s;
+  return n.userData.isCategory ? 1.175 : 0.49;
+}
+
 function updateConnections(elapsed){
   const t = elapsed !== undefined ? elapsed : clock.getElapsedTime();
   for(let i=connections.length-1;i>=0;i--){
     const c=connections[i], na=c.userData.nodeA, nb=c.userData.nodeB;
     if(na.userData.purified||nb.userData.purified){ scene.remove(c); connections.splice(i,1); continue; }
-    const ax=na.position.x, ay=na.position.y, az=na.position.z;
-    const bx=nb.position.x, by=nb.position.y, bz=nb.position.z;
+    let ax=na.position.x, ay=na.position.y, az=na.position.z;
+    let bx=nb.position.x, by=nb.position.y, bz=nb.position.z;
     let dx=bx-ax, dy=by-ay, dz=bz-az;
-    const L = Math.hypot(dx,dy,dz);
+    let L = Math.hypot(dx,dy,dz);
+    if(L>1e-5){
+      const ra = nodeSphereRadius(na), rb = nodeSphereRadius(nb);
+      const inv=1/L;
+      const ux=dx*inv, uy=dy*inv, uz=dz*inv;
+      ax += ux*ra; ay += uy*ra; az += uz*ra;
+      bx -= ux*rb; by -= uy*rb; bz -= uz*rb;
+      dx=bx-ax; dy=by-ay; dz=bz-az;
+      L = Math.hypot(dx,dy,dz);
+    }
     const arr=c.geometry.attributes.position.array;
     const seg=c.userData.ropeSeg||2;
     if(L<1e-5){
@@ -1637,15 +1655,15 @@ function updateConnections(elapsed){
       const u=sm>0?j/sm:0;
       const k=Math.sin(Math.PI*u);
       const k2=k*k;
-      const axial=L*0.048*Math.sin(t*2.05+ph.e)*k*Math.sin(u*11.3+ph.ax);
-      const breathe=L*0.024*Math.sin(t*fq.st+ph.st)*Math.sin(2*Math.PI*u*2.1+ph.ax);
+      const axial=L*0.052*Math.sin(t*2.05+ph.e)*k*Math.sin(u*11.3+ph.ax);
+      const breathe=L*0.028*Math.sin(t*fq.st+ph.st)*Math.sin(2*Math.PI*u*2.1+ph.ax);
       let sx=ax+dx*L*u+dx*axial+dx*breathe*0.55;
       let sy=ay+dy*L*u+dy*axial+dy*breathe*0.55;
       let sz=az+dz*L*u+dz*axial+dz*breathe*0.55;
-      const sag=L*k2*(0.15+0.11*Math.sin(t*fq.sg+ph.sg));
+      const sag=L*k2*(0.26+0.18*Math.sin(t*fq.sg+ph.sg));
       sx+=gx*sag; sy+=gy*sag; sz+=gz*sag;
-      const w=L*k*(0.088*Math.sin(t*fq.rp+ph.r1+u*6.2)+0.058*Math.sin(t*fq.rp*1.41+ph.r2+u*9.5));
-      const w2=L*k*0.048*Math.sin(t*1.72+ph.r3+u*4.35);
+      const w=L*k*(0.095*Math.sin(t*fq.rp+ph.r1+u*6.2)+0.065*Math.sin(t*fq.rp*1.41+ph.r2+u*9.5));
+      const w2=L*k*0.052*Math.sin(t*1.72+ph.r3+u*4.35);
       sx+=px*w+qx*w2; sy+=py*w+qy*w2; sz+=pz*w+qz*w2;
       arr[j*3]=sx; arr[j*3+1]=sy; arr[j*3+2]=sz;
     }
@@ -2571,6 +2589,98 @@ document.getElementById('dp-release-btn').addEventListener('click',()=>{
 /* ================================================================
    POINTER EVENTS (pet vs camera)
    ================================================================ */
+const CAM_ROT_XY = (typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches) ? 0.0115 : 0.008;
+const canvasPointers = new Map();
+let pinchDist0 = null;
+let pinchRadius0 = 28;
+
+function canvasTwoFingerDistance(){
+  if(canvasPointers.size < 2) return 0;
+  const arr = [...canvasPointers.values()];
+  return Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+}
+function releaseAllCanvasPointerCapture(){
+  for(const pid of canvasPointers.keys()){
+    try{ canvas.releasePointerCapture(pid); }catch(_){}
+  }
+}
+function onCanvasPointerDown(e){
+  if(e.pointerType === 'mouse' && e.button !== 0) return;
+  e.preventDefault();
+  canvasPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if(canvasPointers.size >= 2){
+    releaseAllCanvasPointerCapture();
+    cancelCanvasTouchGesture();
+    pinchDist0 = null;
+    return;
+  }
+  try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+  onPointerDown(e.clientX, e.clientY);
+}
+function onCanvasPointerMove(e){
+  if(!canvasPointers.has(e.pointerId)) return;
+  e.preventDefault();
+  canvasPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if(canvasPointers.size >= 2){
+    const d = canvasTwoFingerDistance();
+    if(d < 12) return;
+    if(pinchDist0 == null){
+      pinchDist0 = d;
+      pinchRadius0 = camRadius;
+    }else{
+      camRadius = Math.max(8, Math.min(60, pinchRadius0 * (d / pinchDist0)));
+    }
+    return;
+  }
+  onPointerMove(e.clientX, e.clientY);
+}
+function onCanvasPointerUp(e){
+  if(e.pointerType === 'mouse' && e.button !== 0) return;
+  const had = canvasPointers.has(e.pointerId);
+  canvasPointers.delete(e.pointerId);
+  try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+  if(!had) return;
+  if(canvasPointers.size === 1){
+    pinchDist0 = null;
+    cancelCanvasTouchGesture();
+    const ent = canvasPointers.entries().next().value;
+    if(ent){
+      const pid = ent[0], pt = ent[1];
+      prevMouse = { x: pt.x, y: pt.y };
+      isDragging = true;
+      hasDragged = true;
+      clearTimeout(autoRotTimer); autoRotate = false;
+      try{ canvas.setPointerCapture(pid); }catch(_){}
+    }
+    return;
+  }
+  if(canvasPointers.size === 0){
+    pinchDist0 = null;
+    onPointerUp(e.clientX, e.clientY);
+  }
+}
+function onCanvasPointerCancel(e){
+  canvasPointers.delete(e.pointerId);
+  try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+  if(canvasPointers.size === 1){
+    pinchDist0 = null;
+    const ent = canvasPointers.entries().next().value;
+    if(ent){
+      prevMouse = { x: ent[1].x, y: ent[1].y };
+      isDragging = true;
+      hasDragged = true;
+      try{ canvas.setPointerCapture(ent[0]); }catch(_){}
+    }
+    return;
+  }
+  if(canvasPointers.size === 0){
+    pinchDist0 = null;
+    cancelCanvasTouchGesture();
+    hideHand();
+    autoRotTimer = setTimeout(()=>autoRotate=true, 3500);
+  }
+}
+
 function onPointerDown(cx,cy){
   const hit=getNodeAt(cx,cy);
   if(hit){
@@ -2590,8 +2700,8 @@ function onPointerMove(cx,cy){
   if(isDragging){
     const dx=cx-prevMouse.x, dy=cy-prevMouse.y;
     if(Math.abs(dx)+Math.abs(dy)>2) hasDragged=true;
-    camTheta-=dx*.008;
-    camPhi=Math.max(.15,Math.min(Math.PI-.15,camPhi+dy*.008));
+    camTheta-=dx*CAM_ROT_XY;
+    camPhi=Math.max(.15,Math.min(Math.PI-.15,camPhi+dy*CAM_ROT_XY));
     prevMouse={x:cx,y:cy};
   }
   // hover glow
@@ -2676,25 +2786,14 @@ function updateHandRotation(){
   }
 }
 
-canvas.addEventListener('mousedown',  e=>{ e.preventDefault(); onPointerDown(e.clientX,e.clientY); });
-canvas.addEventListener('mousemove',  e=>{ onPointerMove(e.clientX,e.clientY); });
-canvas.addEventListener('mouseup',    e=>{ onPointerUp(e.clientX,e.clientY); });
-canvas.addEventListener('touchstart', e=>{
-  if(e.touches.length>1){ cancelCanvasTouchGesture(); return; }
-  e.preventDefault();
-  onPointerDown(e.touches[0].clientX,e.touches[0].clientY);
-},{passive:false});
-canvas.addEventListener('touchmove', e=>{
-  if(e.touches.length>1){ cancelCanvasTouchGesture(); return; }
-  e.preventDefault();
-  onPointerMove(e.touches[0].clientX,e.touches[0].clientY);
-},{passive:false});
-canvas.addEventListener('touchend', e=>{
-  if(e.touches.length>0) return;
-  const t=e.changedTouches[0];
-  if(t) onPointerUp(t.clientX,t.clientY);
+canvas.addEventListener('pointerdown', onCanvasPointerDown, { passive: false });
+canvas.addEventListener('pointermove', onCanvasPointerMove, { passive: false });
+canvas.addEventListener('pointerup', onCanvasPointerUp);
+canvas.addEventListener('pointercancel', onCanvasPointerCancel);
+canvas.addEventListener('pointerleave', ()=>{
+  if(canvasPointers.size > 0) return;
+  if(!pettingNode) hideHand();
 });
-canvas.addEventListener('mouseleave', ()=>{ if(!pettingNode) hideHand(); });
 canvas.addEventListener('wheel',e=>{ camRadius=Math.max(8,Math.min(60,camRadius+e.deltaY*.04)); e.preventDefault(); },{passive:false});
 
 /* ================================================================
@@ -2709,6 +2808,7 @@ function saveData(){
       text:n.userData.text, isCategory:n.userData.isCategory,
       cIdx:n.userData.cIdx, parentId:n.userData.parentId, id:n.userData.id,
       stages:n.userData.stages, strokeCount:n.userData.strokeCount,
+      sphereR:n.userData.sphereR,
       pos:[n.position.x,n.position.y,n.position.z]
     }))
   };
@@ -2730,6 +2830,7 @@ function loadData(){
       const m=addNode(nd.text,nd.isCategory,nd.cIdx,null,new THREE.Vector3(...nd.pos));
       m.userData.id=nd.id; m.userData.parentId=nd.parentId;
       m.userData.stages=nd.stages||1; m.userData.strokeCount=nd.strokeCount||0;
+      if(nd.sphereR!=null&&nd.sphereR>0) m.userData.sphereR=nd.sphereR;
       idMap[nd.id]=m; if(nd.id>=nodeIdSeq) nodeIdSeq=nd.id+1;
     });
     // Rebuild parent connections
@@ -2922,6 +3023,7 @@ async function loadFromCloud(){
         const m = addNode(nd.text, nd.isCategory, nd.cIdx, null, new THREE.Vector3(...nd.pos));
         m.userData.id = nd.id; m.userData.parentId = nd.parentId;
         m.userData.stages = nd.stages||1; m.userData.strokeCount = nd.strokeCount||0;
+        if(nd.sphereR!=null&&nd.sphereR>0) m.userData.sphereR=nd.sphereR;
         idMap[nd.id] = m; if(nd.id >= nodeIdSeq) nodeIdSeq = nd.id+1;
       });
       data.nodes.forEach(nd=>{
