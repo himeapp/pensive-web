@@ -216,7 +216,7 @@ html, body {
     right: calc(max(10px, env(safe-area-inset-right, 0px)) + min(54vw, 220px));
     transform: none;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     white-space: normal;
     row-gap: 6px;
     column-gap: 8px;
@@ -879,32 +879,34 @@ html, body {
 }
 
 /* 핀치 줌 시에만 표시: 100%로 되돌리기 */
+/* FAB(＋ 생각 추가) 바로 위 · 줌 시만 */
 #zoom-reset-btn {
-  position: fixed;
-  right: max(12px, env(safe-area-inset-right, 0px));
-  bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  z-index: 999999;
-  padding: 10px 14px;
-  font-size: 13px; font-weight: 600;
+  position: absolute;
+  left: 50%;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  z-index: 25;
+  transform: translateX(-50%) scale(0.96);
+  padding: 4px 10px;
+  font-size: 11px; font-weight: 600;
   font-family: 'Noto Sans KR', sans-serif;
-  color: #e8e0ff;
-  background: rgba(25,12,55,.92);
-  border: 1px solid rgba(140,90,255,.5);
-  border-radius: 22px;
-  box-shadow: 0 4px 24px rgba(0,0,0,.4);
+  color: rgba(210, 190, 255, .88);
+  background: rgba(12, 6, 32, .86);
+  border: 1px solid rgba(120, 75, 210, .4);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .32);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: scale(0.96);
   transition: opacity .2s, visibility .2s, transform .2s;
+  white-space: nowrap;
 }
 #zoom-reset-btn.visible {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: scale(1);
+  transform: translateX(-50%) scale(1);
 }
   </style>
 </head>
@@ -912,7 +914,6 @@ html, body {
 
 <canvas id="three-canvas"></canvas>
 <div id="labels-container"></div>
-<button type="button" id="zoom-reset-btn" aria-label="화면 확대 100%로 초기화">100% 보기</button>
 
 <!-- ======= GOOGLE AUTH ======= -->
 <div id="auth-btn" class="hidden">
@@ -1006,12 +1007,10 @@ html, body {
     <h1 class="app-title">마음 정화 공간</h1>
     <p class="app-subtitle">마음속에 떠오르는 것들을 의식의 흐름대로 적어보세요</p>
 
-    <label class="input-section-label" for="thought-input">오늘의 마음</label>
-    <textarea id="thought-input" placeholder="문장이나 단어, 느낌, 어떤 형태든 괜찮아요.
+    <textarea id="thought-input" aria-label="마음에 떠오르는 것 적기" placeholder="문장이나 단어, 느낌, 어떤 형태든 괜찮아요.
 
 예) 요즘 회사에서 너무 힘들어. 팀장이 자꾸 압박을 줘서 지쳐가고 있어.
 사실 다 내 탓인 것 같아. 미래가 막막해."></textarea>
-    <div class="input-hint">✦ 적으시면 관념들로 자동 구성돼요 · 구슬을 쓰다듬어 정화하세요</div>
 
     <button class="btn-primary" id="add-thought-btn">🌌 공간에 펼치기</button>
     <div class="divider"><span>또는</span></div>
@@ -1059,6 +1058,7 @@ html, body {
     </div>
   </div>
 
+  <button type="button" id="zoom-reset-btn" aria-label="화면 확대 100%로 초기화">100%</button>
   <button id="add-fab">＋ 생각 추가</button>
 </div>
 
