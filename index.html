@@ -102,7 +102,11 @@ html, body {
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   margin-bottom: 4px;
 }
-.app-subtitle { font-size: 13px; color: rgba(180,160,220,.65); text-align: center; margin-bottom: 22px; }
+.app-subtitle {
+  font-size: 13px; color: rgba(180,160,220,.65); text-align: center; margin-bottom: 22px;
+  max-width: 100%; line-height: 1.55;
+  word-break: keep-all; overflow-wrap: break-word;
+}
 
 .input-section-label {
   font-size: 12px; font-weight: 500; color: rgba(180,160,220,.7);
@@ -133,6 +137,9 @@ html, body {
 .input-hint {
   font-size: 12px; color: rgba(160,140,220,.68);
   margin-top: 8px; margin-bottom: 2px;
+  max-width: 100%; line-height: 1.55;
+  word-break: keep-all; overflow-wrap: break-word;
+  text-align: center;
 }
 .btn-primary {
   width: 100%; margin-top: 18px; padding: 15px;
@@ -306,18 +313,23 @@ html, body {
 
 .ai-msg {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   font-style: normal;
-  color: #fff8fc;
-  padding: 11px 12px;
-  margin: 6px 2px;
-  line-height: 1.52;
-  border-radius: 10px;
-  border: 1px solid rgba(200, 165, 255, .28);
-  background: linear-gradient(160deg, rgba(95, 65, 145, .58), rgba(48, 30, 88, .52));
+  color: rgba(255, 246, 236, .94);
+  padding: 14px 12px 16px;
+  margin: 2px 0 4px;
+  line-height: 1.58;
+  border: none;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse 110% 90% at 50% -30%, rgba(255, 225, 195, .38), transparent 58%),
+    radial-gradient(ellipse 100% 140% at 100% 40%, rgba(190, 165, 255, .14), transparent 52%),
+    rgba(18, 12, 38, .12);
   box-shadow:
-    0 0 24px rgba(140, 100, 220, .14),
-    inset 0 1px 0 rgba(255, 255, 255, .07);
+    0 0 36px rgba(255, 200, 165, .12),
+    0 0 72px rgba(170, 130, 240, .09),
+    inset 0 0 28px rgba(255, 230, 210, .05);
+  text-shadow: 0 0 20px rgba(255, 212, 185, .42), 0 0 40px rgba(220, 190, 255, .15);
   word-break: keep-all;
 }
 
@@ -491,7 +503,8 @@ html, body {
   position: fixed;
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   right: calc(14px + env(safe-area-inset-right, 0px));
-  z-index: 105;
+  /* 입력 오버레이(100) 아래에 두어 카드와 겹치지 않게 — 공간 입장 후에만 위에 보임 */
+  z-index: 90;
   font-size: 0;
   line-height: 0;
   font-weight: 400;
@@ -613,6 +626,22 @@ html, body {
 }
 #auth-sync-dot.syncing { display: block; animation: blink-dot .8s ease infinite alternate; }
 @keyframes blink-dot { from{opacity:.3;} to{opacity:1;} }
+
+/* 첫 화면(입력 오버레이): 모바일에서 긴 문장 줄바꿈·여백 */
+@media (max-width: 560px) {
+  .input-card {
+    width: 94%;
+    padding: 24px 18px 22px;
+    border-radius: 20px;
+  }
+  .app-logo { font-size: 28px; margin-bottom: 4px; }
+  .app-title { font-size: 20px; line-height: 1.35; padding: 0 2px; }
+  .app-subtitle { font-size: 12.5px; margin-bottom: 18px; padding: 0 4px; }
+  .input-section-label { padding: 0 2px; }
+  #thought-input { min-height: 160px; font-size: 14px; padding: 14px 14px; }
+  .input-hint { font-size: 11.5px; padding: 0 2px; margin-top: 10px; }
+  .btn-primary { margin-top: 14px; padding: 14px; font-size: 14px; }
+}
   </style>
 </head>
 <body>
