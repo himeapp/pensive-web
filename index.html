@@ -207,23 +207,25 @@ html, body {
   .hud-div { height: 14px; }
 }
 
-/* ==================== DETAIL PANEL (우측 콤팩트) ==================== */
+/* ==================== DETAIL PANEL (우측 · 세로 중앙) ==================== */
 #detail-panel {
   position: absolute;
   left: auto;
   right: max(8px, env(safe-area-inset-right, 0px));
-  /* top+bottom 동시 지정 시 패널이 세로로 늘어나 빈 여백이 커짐 → 하단 기준 + 내용 높이 + max-height */
-  top: auto;
-  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-  transform: none;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
   width: calc(100vw - 16px);
   max-width: 220px;
-  max-height: calc(100vh - 168px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: fit-content;
+  min-height: 0;
+  max-height: calc(100vh - 120px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
   z-index: 25;
   background: rgba(6, 2, 18, .94);
   border: 1px solid rgba(130, 80, 230, .32);
   border-radius: 14px;
-  padding: 9px 10px 10px;
+  padding: 12px 12px 11px;
   backdrop-filter: blur(20px);
   box-shadow: -6px 0 28px rgba(60, 0, 140, .32), 0 0 1px rgba(200, 180, 255, .18);
   pointer-events: auto;
@@ -235,21 +237,43 @@ html, body {
 #detail-panel.hidden {
   opacity: 0;
   visibility: hidden;
-  transform: translateX(12px);
+  transform: translateY(-50%) translateX(14px);
 }
 
 .dp-stack {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 8px;
+}
+
+.dp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 0 1px 10px 1px;
+  margin: 0 -1px 2px -1px;
+  border-bottom: 1px solid rgba(120, 80, 180, .2);
+}
+
+.dp-category-dot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 3px;
+  background: #8866ff;
+  box-shadow: 0 0 10px rgba(136, 102, 255, .5);
 }
 
 #dp-category-label {
-  font-size: 11px;
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
   font-weight: 600;
-  color: rgba(205, 190, 248, .9);
-  line-height: 1.35;
+  color: rgba(210, 198, 252, .95);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
   word-break: keep-all;
 }
 
@@ -259,6 +283,7 @@ html, body {
   color: rgba(188, 178, 228, .82);
   line-height: 1.45;
   margin: 0;
+  padding: 0 1px;
   word-break: keep-all;
 }
 
@@ -291,7 +316,7 @@ html, body {
 
 .btn-dp-close {
   width: 100%;
-  margin-top: 2px;
+  margin-top: 0;
   padding: 7px 10px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, .12);
@@ -708,7 +733,10 @@ html, body {
   <!-- Detail Panel: 우측 콤팩트 -->
   <div id="detail-panel" class="hidden">
     <div class="dp-stack">
-      <div id="dp-category-label"></div>
+      <div class="dp-head">
+        <span id="dp-category-dot" class="dp-category-dot" aria-hidden="true"></span>
+        <div id="dp-category-label"></div>
+      </div>
       <div id="detail-text"></div>
       <div id="dp-stage-info"></div>
       <div id="ai-message" class="ai-msg"></div>
@@ -1202,13 +1230,6 @@ function getNodeAt(cx, cy){
 let selectedNode = null;
 let hoveredNode  = null;
 
-function formatCategoryPurifiedCount(catNode){
-  const total=nodes.filter(n=>n.userData.parentId===catNode.userData.id);
-  const active=nodes.filter(n=>n.userData.parentId===catNode.userData.id&&!n.userData.purified);
-  const purified=total.length-active.length;
-  return `${purified}/${total.length} ✋`;
-}
-
 function selectNode(node){
   if(selectedNode&&selectedNode!==node){ selectedNode.scale.setScalar(1); selectedNode.material.emissiveIntensity=1; }
   selectedNode=node;
@@ -1230,15 +1251,26 @@ function selectNode(node){
     catLab.textContent='—';
   }
 
+  let dotCIdx=node.userData.cIdx;
+  if(!node.userData.isCategory&&node.userData.parentId){
+    const parDot=nodes.find(n=>n.userData.id===node.userData.parentId);
+    if(parDot) dotCIdx=parDot.userData.cIdx;
+  }
+  const pd=pal(dotCIdx);
+  const dotEl=document.getElementById('dp-category-dot');
+  dotEl.style.background=`rgb(${pd.r},${pd.g},${pd.b})`;
+  dotEl.style.boxShadow=`0 0 12px rgba(${pd.r},${pd.g},${pd.b},.55)`;
+
   document.getElementById('detail-text').textContent='"'+node.userData.text+'"';
 
   const done=node.userData.strokeCount;
   const stageEl=document.getElementById('dp-stage-info');
   if(node.userData.isCategory){
-    stageEl.textContent=formatCategoryPurifiedCount(node);
+    const subCount=nodes.filter(n=>n.userData.parentId===node.userData.id).length;
+    stageEl.textContent=`세부 관념 ${subCount}개`;
   } else {
     const curStage=Math.floor(done/10)+1;
-    stageEl.textContent=`정화 단계 ${curStage}/${node.userData.stages} · ${done%10}/10 ✋`;
+    stageEl.textContent=`정화 단계 ${curStage}/${node.userData.stages} ✋`;
   }
 
   document.getElementById('ai-message').textContent=PURIFY_MSGS[Math.floor(Math.random()*PURIFY_MSGS.length)];
@@ -1296,7 +1328,7 @@ function applyStroke(node){
     const done=node.userData.strokeCount;
     const curStage=Math.floor(done/10)+1;
     document.getElementById('dp-stage-info').textContent=
-      `정화 단계 ${curStage}/${node.userData.stages} · ${done%10}/10 ✋`;
+      `정화 단계 ${curStage}/${node.userData.stages} ✋`;
   }
 
   // Color shift toward white as progress builds
