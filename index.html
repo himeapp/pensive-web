@@ -38,8 +38,8 @@ html, body {
 #hand-cursor {
   position: fixed; pointer-events: none; z-index: 9999;
   display: none;
-  transform: translate(-28px, -8px); /* hotspot: fingertip center */
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,.55));
+  transform: translate(-24px, -5px); /* hotspot: index fingertip */
+  filter: drop-shadow(2px 8px 18px rgba(0,0,0,.28)) drop-shadow(0 1px 2px rgba(255,255,255,.35));
   transition: opacity .12s;
 }
 #hand-cursor.show { display: block; }
@@ -47,10 +47,10 @@ html, body {
 
 /* idle: very subtle organic float — breathing-like, not mechanical */
 @keyframes hand-idle {
-  0%   { transform: translate(-28px,-10px) rotate(-3deg); }
-  30%  { transform: translate(-28px, -7px) rotate( 2deg); }
-  65%  { transform: translate(-28px,-11px) rotate(-1deg); }
-  100% { transform: translate(-28px,-10px) rotate(-3deg); }
+  0%   { transform: translate(-24px,-7px) rotate(-3deg); }
+  30%  { transform: translate(-24px, -4px) rotate( 2deg); }
+  65%  { transform: translate(-24px, -8px) rotate(-1deg); }
+  100% { transform: translate(-24px, -7px) rotate(-3deg); }
 }
 #hand-cursor.idle    { animation: hand-idle 3.8s ease-in-out infinite; }
 /* petting rotation is driven by JS (velocity-based) — no CSS needed */
@@ -543,24 +543,47 @@ html, body {
   </div>
 </div>
 
-<!-- Mickey Mouse hand cursor -->
+<!-- 3D cartoon glove pointer -->
 <div id="hand-cursor">
-  <svg xmlns="http://www.w3.org/2000/svg" width="70" height="82" viewBox="0 0 70 82">
-    <style>.hp{fill:#f2f0ec;stroke:#1c1c1c;stroke-width:2.9;paint-order:stroke fill}</style>
-    <ellipse class="hp" cx="9"  cy="47" rx="11"  ry="7.5" transform="rotate(-12 9 47)"/>
-    <ellipse class="hp" cx="21" cy="19" rx="7.5" ry="14"  transform="rotate(-9 21 19)"/>
-    <ellipse class="hp" cx="33" cy="16" rx="8"   ry="16"/>
-    <ellipse class="hp" cx="45" cy="18" rx="7.5" ry="15"  transform="rotate(9 45 18)"/>
-    <ellipse class="hp" cx="57" cy="29" rx="6"   ry="12"  transform="rotate(22 57 29)"/>
-    <ellipse class="hp" cx="37" cy="58" rx="26"  ry="22"/>
-    <ellipse class="hp" cx="37" cy="74" rx="18"  ry="10"/>
-    <path d="M 22,39 Q 23,44 22,49" fill="none" stroke="#1c1c1c" stroke-width="2.2" stroke-linecap="round"/>
-    <path d="M 35,38 Q 36,43 35,48" fill="none" stroke="#1c1c1c" stroke-width="2.2" stroke-linecap="round"/>
-    <path d="M 47,39 Q 48,44 47,49" fill="none" stroke="#1c1c1c" stroke-width="2.2" stroke-linecap="round"/>
-    <ellipse cx="19" cy="12" rx="2.5" ry="3.5" fill="#d8d6d0" transform="rotate(-9 19 12)"/>
-    <ellipse cx="31" cy="8"  rx="2.5" ry="4"   fill="#d8d6d0"/>
-    <ellipse cx="43" cy="11" rx="2.5" ry="3.5" fill="#d8d6d0" transform="rotate(9 43 11)"/>
-    <ellipse cx="56" cy="23" rx="2"   ry="3"   fill="#d8d6d0" transform="rotate(22 56 23)"/>
+  <svg xmlns="http://www.w3.org/2000/svg" width="76" height="92" viewBox="0 0 76 92" aria-hidden="true">
+    <defs>
+      <linearGradient id="hg-glove" x1="8" y1="4" x2="72" y2="90" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset=".42" stop-color="#f4f4f4"/>
+        <stop offset=".78" stop-color="#d6d6d6"/>
+        <stop offset="1" stop-color="#aeaeae"/>
+      </linearGradient>
+      <linearGradient id="hg-finger" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset=".55" stop-color="#ececec"/>
+        <stop offset="1" stop-color="#b6b6b6"/>
+      </linearGradient>
+      <radialGradient id="hg-tip" cx="32%" cy="28%" r="65%">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset=".55" stop-color="#f0f0f0"/>
+        <stop offset="1" stop-color="#c9c9c9"/>
+      </radialGradient>
+      <linearGradient id="hg-ridge" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e8e8e8"/>
+        <stop offset=".45" stop-color="#fafafa"/>
+        <stop offset="1" stop-color="#cfcfcf"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="38" cy="88" rx="19" ry="5" fill="#000" opacity=".09"/>
+    <ellipse cx="38" cy="83" rx="17" ry="6.5" fill="url(#hg-glove)"/>
+    <ellipse fill="url(#hg-finger)" cx="58" cy="34" rx="5.8" ry="11.5" transform="rotate(17 58 34)" opacity=".96"/>
+    <ellipse fill="url(#hg-finger)" cx="49" cy="26" rx="6.5" ry="14" transform="rotate(9 49 26)" opacity=".98"/>
+    <ellipse fill="url(#hg-finger)" cx="37" cy="20" rx="7" ry="16.5"/>
+    <ellipse fill="url(#hg-finger)" cx="24" cy="22" rx="7.2" ry="19.5" transform="rotate(-7 24 22)"/>
+    <ellipse cx="38" cy="58" rx="25" ry="22" fill="url(#hg-glove)"/>
+    <ellipse fill="url(#hg-finger)" cx="13" cy="49" rx="9.5" ry="8" transform="rotate(-32 13 49)"/>
+    <path d="M 27 42 Q 28 50 27 58" fill="none" stroke="url(#hg-ridge)" stroke-width="2.6" stroke-linecap="round" opacity=".88"/>
+    <path d="M 38 40 Q 39 49 38 57" fill="none" stroke="url(#hg-ridge)" stroke-width="2.6" stroke-linecap="round" opacity=".88"/>
+    <path d="M 49 42 Q 50 50 49 58" fill="none" stroke="url(#hg-ridge)" stroke-width="2.6" stroke-linecap="round" opacity=".88"/>
+    <ellipse cx="23" cy="7" rx="3.2" ry="4" fill="url(#hg-tip)" transform="rotate(-7 23 7)"/>
+    <ellipse cx="37" cy="5" rx="3.4" ry="4.2" fill="url(#hg-tip)"/>
+    <ellipse cx="49" cy="8" rx="3" ry="3.8" fill="url(#hg-tip)" transform="rotate(9 49 8)"/>
+    <ellipse cx="58" cy="19" rx="2.4" ry="3.2" fill="url(#hg-tip)" transform="rotate(17 58 19)"/>
   </svg>
 </div>
 
@@ -628,7 +651,7 @@ html, body {
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
 <div id="toast"></div>
 
-<p id="creator-credit">만든 사람 <a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
+<p id="creator-credit"><a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
 
 <!-- Feedback button -->
 <button id="feedback-btn">피드백</button>
@@ -1754,12 +1777,12 @@ function updateHandRotation(){
     const target = Math.max(-30, Math.min(30, handVelX * 3.8));
     handRotDeg  += (target - handRotDeg) * 0.20;
     handVelX    *= 0.65;
-    handEl.style.transform = `translate(-28px,-8px) rotate(${handRotDeg.toFixed(1)}deg)`;
+    handEl.style.transform = `translate(-24px,-5px) rotate(${handRotDeg.toFixed(1)}deg)`;
   } else {
     // Ease back to neutral so idle CSS animation can take over
     handRotDeg *= 0.78;
     if(Math.abs(handRotDeg) > 0.3){
-      handEl.style.transform = `translate(-28px,-8px) rotate(${handRotDeg.toFixed(1)}deg)`;
+      handEl.style.transform = `translate(-24px,-5px) rotate(${handRotDeg.toFixed(1)}deg)`;
     } else {
       handEl.style.transform = '';
       handRotDeg = 0;
