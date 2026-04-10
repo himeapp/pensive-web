@@ -207,36 +207,41 @@ html, body {
   .hud-div { height: 14px; }
 }
 
-/* ==================== DETAIL PANEL (FAB 위 가로 바) ==================== */
+/* ==================== DETAIL PANEL (우측 사이드) ==================== */
 #detail-panel {
   position: absolute;
-  left: 50%;
+  left: auto;
+  right: max(10px, env(safe-area-inset-right, 0px));
+  top: calc(72px + env(safe-area-inset-top, 0px));
   bottom: calc(92px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  /* min() 미지원 WebView에서 width 무시 → 패널이 내용만큼 가로로 과확장되는 것 방지 */
-  width: calc(100% - 20px);
-  max-width: 560px;
+  transform: none;
+  width: calc(100vw - 20px);
+  max-width: 340px;
   z-index: 25;
   background: rgba(6, 2, 18, .94);
   border: 1px solid rgba(130, 80, 230, .35);
   border-radius: 18px;
   padding: 12px 14px 12px;
   backdrop-filter: blur(22px);
-  box-shadow: 0 -8px 40px rgba(60, 0, 140, .35), 0 0 1px rgba(200, 180, 255, .2);
+  box-shadow: -8px 0 36px rgba(60, 0, 140, .35), 0 0 1px rgba(200, 180, 255, .2);
   pointer-events: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   transition: opacity .28s ease, transform .32s cubic-bezier(.34, 1.2, .64, 1), visibility .32s;
 }
 #detail-panel.hidden {
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-50%) translateY(14px);
+  transform: translateX(18px);
 }
 
 .dp-bar-top {
   display: flex;
-  align-items: flex-start;
-  gap: 10px 14px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: nowrap;
   margin-bottom: 8px;
 }
 .dp-bar-identity {
@@ -256,7 +261,7 @@ html, body {
 #dp-parent-row {
   font-size: 11px; color: rgba(160,140,210,.82);
   margin-bottom: 0; display: flex; align-items: center; gap: 5px;
-  max-width: 42vw;
+  max-width: 100%;
 }
 #dp-parent-row.hidden { display: none; }
 #dp-parent-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -266,13 +271,15 @@ html, body {
   line-height: 1.55;
   margin-bottom: 0;
   word-break: keep-all;
-  flex: 1;
-  min-width: min(100%, 200px);
+  flex: none;
+  width: 100%;
+  min-width: 0;
 }
 
 .dp-bar-meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  flex-wrap: nowrap;
   align-items: stretch;
   gap: 8px;
   margin-bottom: 8px;
@@ -282,13 +289,15 @@ html, body {
   font-size: 11px; border-radius: 10px; padding: 6px 10px; margin-bottom: 0;
   background: rgba(120,60,220,.15); color: rgba(200,180,240,.85);
   border-left: 2px solid rgba(150,80,255,.5);
-  flex: 1 1 140px;
+  flex: none;
+  width: 100%;
   min-width: 0;
 }
 #dp-children-info {
   font-size: 11px; padding: 6px 10px; border-radius: 10px; margin-bottom: 0;
   background: rgba(60,30,100,.28); color: rgba(180,160,230,.88);
-  flex: 0 1 auto;
+  flex: none;
+  width: 100%;
 }
 #dp-children-info.hidden { display: none; }
 
@@ -740,7 +749,7 @@ html, body {
     <span class="hud-stat">총 <strong id="hud-total">0</strong></span>
   </div>
 
-  <!-- Detail Panel: FAB(생각 추가) 바로 위 가로 바 -->
+  <!-- Detail Panel: 우측 사이드 -->
   <div id="detail-panel" class="hidden">
     <div class="dp-bar-top">
       <div class="dp-bar-identity">
@@ -777,7 +786,7 @@ html, body {
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
 <div id="toast"></div>
 
-<p id="creator-credit"><a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
+<p id="creator-credit"><a href="detail-panel-options.html">상세 시안</a><span aria-hidden="true"> · </span><a href="https://himeapp.github.io/himewho/" target="_blank" rel="noopener noreferrer">himeapp</a></p>
 
 <!-- Feedback button -->
 <button id="feedback-btn">피드백</button>
