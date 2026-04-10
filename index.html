@@ -515,18 +515,31 @@ html, body {
 }
 #pet-hint.show { opacity: 1; }
 
-/* FAB */
+/* FAB + 줌(줌일 때만 위에 작게) */
+#fab-stack {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  z-index: 26;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+}
+#fab-stack > * { pointer-events: auto; }
+
 #add-fab {
-  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-  z-index: 24;
-  pointer-events: auto; padding: 12px 28px;
+  position: static;
+  margin: 0;
+  padding: 12px 28px;
   background: rgba(0,0,12,.82); border: 1px solid rgba(120,70,255,.45);
   border-radius: 30px; color: rgba(180,150,255,.9);
   font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 600;
   cursor: pointer; backdrop-filter: blur(14px);
   box-shadow: 0 4px 26px rgba(80,0,200,.28); transition: all .2s;
 }
-#add-fab:hover { background: rgba(80,40,160,.3); transform: translateX(-50%) translateY(-2px); }
+#add-fab:hover { background: rgba(80,40,160,.3); transform: translateY(-2px); }
 
 /* ==================== TOAST ==================== */
 #toast {
@@ -878,35 +891,25 @@ html, body {
   .btn-primary { margin-top: 14px; padding: 14px; font-size: 14px; }
 }
 
-/* 핀치 줌 시에만 표시: 100%로 되돌리기 */
-/* FAB(＋ 생각 추가) 바로 위 · 줌 시만 */
 #zoom-reset-btn {
-  position: absolute;
-  left: 50%;
-  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
-  z-index: 25;
-  transform: translateX(-50%) scale(0.96);
-  padding: 4px 10px;
-  font-size: 11px; font-weight: 600;
+  display: none;
+  margin: 0;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.35;
   font-family: 'Noto Sans KR', sans-serif;
-  color: rgba(210, 190, 255, .88);
-  background: rgba(12, 6, 32, .86);
-  border: 1px solid rgba(120, 75, 210, .4);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, .32);
+  color: rgba(200, 185, 255, .82);
+  background: rgba(10, 5, 28, .9);
+  border: 1px solid rgba(110, 70, 200, .38);
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, .28);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity .2s, visibility .2s, transform .2s;
   white-space: nowrap;
 }
 #zoom-reset-btn.visible {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateX(-50%) scale(1);
+  display: inline-block;
 }
   </style>
 </head>
@@ -1058,8 +1061,10 @@ html, body {
     </div>
   </div>
 
-  <button type="button" id="zoom-reset-btn" aria-label="화면 확대 100%로 초기화">100%</button>
-  <button id="add-fab">＋ 생각 추가</button>
+  <div id="fab-stack">
+    <button type="button" id="zoom-reset-btn" aria-label="화면 확대 100%로 초기화">100%</button>
+    <button id="add-fab">＋ 생각 추가</button>
+  </div>
 </div>
 
 <div id="pet-hint">구슬을 쓰다듬어 정화하세요 ✋</div>
@@ -2446,6 +2451,14 @@ function onPointerUp(cx,cy){
     autoRotTimer=setTimeout(()=>autoRotate=true,3500);
   }
 }
+function cancelCanvasTouchGesture(){
+  if(pettingNode){
+    if(pettingNode.userData.wobbleMag) pettingNode.userData.wobbleMag=0;
+    hideHand();
+    pettingNode=null;
+  }
+  isDragging=false;
+}
 
 /* ================================================================
    HAND CURSOR CONTROLLER
@@ -2501,9 +2514,21 @@ function updateHandRotation(){
 canvas.addEventListener('mousedown',  e=>{ e.preventDefault(); onPointerDown(e.clientX,e.clientY); });
 canvas.addEventListener('mousemove',  e=>{ onPointerMove(e.clientX,e.clientY); });
 canvas.addEventListener('mouseup',    e=>{ onPointerUp(e.clientX,e.clientY); });
-canvas.addEventListener('touchstart', e=>{ e.preventDefault(); onPointerDown(e.touches[0].clientX,e.touches[0].clientY); },{passive:false});
-canvas.addEventListener('touchmove',  e=>{ e.preventDefault(); onPointerMove(e.touches[0].clientX,e.touches[0].clientY); },{passive:false});
-canvas.addEventListener('touchend',   e=>{ onPointerUp(e.changedTouches[0].clientX,e.changedTouches[0].clientY); });
+canvas.addEventListener('touchstart', e=>{
+  if(e.touches.length>1){ cancelCanvasTouchGesture(); return; }
+  e.preventDefault();
+  onPointerDown(e.touches[0].clientX,e.touches[0].clientY);
+},{passive:false});
+canvas.addEventListener('touchmove', e=>{
+  if(e.touches.length>1){ cancelCanvasTouchGesture(); return; }
+  e.preventDefault();
+  onPointerMove(e.touches[0].clientX,e.touches[0].clientY);
+},{passive:false});
+canvas.addEventListener('touchend', e=>{
+  if(e.touches.length>0) return;
+  const t=e.changedTouches[0];
+  if(t) onPointerUp(t.clientX,t.clientY);
+});
 canvas.addEventListener('mouseleave', ()=>{ if(!pettingNode) hideHand(); });
 canvas.addEventListener('wheel',e=>{ camRadius=Math.max(8,Math.min(60,camRadius+e.deltaY*.04)); e.preventDefault(); },{passive:false});
 
@@ -2777,39 +2802,65 @@ async function loadFromCloud(){
   const viewportMeta = document.querySelector('meta[name="viewport"]');
   if (!btn || !viewportMeta) return;
   const originalViewport = viewportMeta.getAttribute('content') || 'width=device-width, initial-scale=1.0, viewport-fit=cover';
-  function layoutWidth(){
-    return Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+  let iosZoomHint = false;
+
+  function layoutW(){
+    return document.documentElement.clientWidth || window.innerWidth || 0;
   }
+
+  function looksLikeDefaultZoom(vv, lw){
+    if (!vv || lw < 40) return true;
+    if (vv.scale > 1.025) return false;
+    if (vv.width > 0 && (lw - vv.width) > 28) return false;
+    return true;
+  }
+
   function isPinchZoomed(){
     const vv = window.visualViewport;
     if (!vv) return false;
-    if (vv.scale > 1.008) return true;
-    const lw = layoutWidth();
-    if (lw < 40) return false;
-    const gap = lw - vv.width;
-    if (gap > 12) return true;
-    if (vv.width / lw < 0.97) return true;
+    const lw = layoutW();
+    if (vv.scale > 1.03) return true;
+    if (lw > 0 && vv.width > 0 && (lw - vv.width) > 40) return true;
+    if (iosZoomHint) {
+      if (looksLikeDefaultZoom(vv, lw)) iosZoomHint = false;
+      return iosZoomHint;
+    }
     return false;
   }
+
   function refresh(){ btn.classList.toggle('visible', isPinchZoomed()); }
+
   if (window.visualViewport){
     window.visualViewport.addEventListener('resize', refresh);
     window.visualViewport.addEventListener('scroll', refresh);
   }
   window.addEventListener('resize', refresh);
   window.addEventListener('orientationchange', function(){ setTimeout(refresh, 280); });
+
   let multi = false;
   document.addEventListener('touchstart', function(e){ if (e.touches && e.touches.length > 1) multi = true; }, { passive: true });
   document.addEventListener('touchend', function(){
     if (!multi) return;
     multi = false;
-    [80, 240, 600].forEach(function(ms){ setTimeout(refresh, ms); });
+    setTimeout(function(){
+      const vv = window.visualViewport;
+      const lw = layoutW();
+      if (vv && (vv.scale > 1.03 || (lw > 0 && vv.width > 0 && (lw - vv.width) > 40))) iosZoomHint = true;
+      refresh();
+    }, 120);
+    [320, 700].forEach(function(ms){ setTimeout(refresh, ms); });
   }, { passive: true });
+
   document.addEventListener('gestureend', function(e){
-    if (e.scale != null && Math.abs(e.scale - 1) > 0.02)
-      [40, 200, 500].forEach(function(ms){ setTimeout(refresh, ms); });
+    if (e.scale == null) return;
+    if (Math.abs(e.scale - 1) > 0.04) iosZoomHint = true;
+    else iosZoomHint = false;
+    setTimeout(refresh, 40);
+    setTimeout(refresh, 200);
   }, { passive: true });
+
   btn.addEventListener('click', function(){
+    iosZoomHint = false;
     viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover');
     setTimeout(function(){
       viewportMeta.setAttribute('content', originalViewport);
@@ -2818,6 +2869,7 @@ async function loadFromCloud(){
       setTimeout(refresh, 280);
     }, 120);
   });
+
   refresh();
 })();
 
