@@ -29,6 +29,10 @@ html, body {
   position: absolute; pointer-events: none;
   transform: translate(-50%, calc(-100% - 8px));
   text-shadow: 0 0 8px currentColor;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
 }
 .node-label.category { font-size: 13px; font-weight: 700; padding: 5px 13px; border-radius: 20px; white-space: nowrap; }
 .node-label.thought  {
@@ -336,6 +340,9 @@ html, body {
   line-height: 1.4;
   letter-spacing: -0.01em;
   word-break: keep-all;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #detail-text {
@@ -346,6 +353,9 @@ html, body {
   margin: 0;
   padding: 0 1px;
   word-break: keep-all;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #dp-stage-info {
@@ -359,6 +369,32 @@ html, body {
   border-left: 2px solid rgba(100, 80, 150, .22);
   line-height: 1.35;
   word-break: keep-all;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* 세부창: 쓰다듬기(정화) 진행 — 구슬과 동일 비율 */
+#dp-progress-wrap {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+#dp-progress-wrap.is-visible { display: flex; }
+.dp-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, .08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.dp-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #7733ff, #cc88ff);
+  border-radius: 3px;
+  transition: width 0.16s ease-out;
 }
 
 .ai-msg {
@@ -1054,6 +1090,9 @@ html, body {
       </div>
       <div id="detail-text"></div>
       <div id="dp-stage-info"></div>
+      <div id="dp-progress-wrap" aria-hidden="true">
+        <div class="dp-bar"><div class="dp-fill" id="dp-fill"></div></div>
+      </div>
       <div id="ai-message" class="ai-msg"></div>
       <button type="button" class="btn-dp-add-child" id="dp-add-child-btn">＋ 세부 관념 추가</button>
       <button type="button" class="btn-dp-release" id="dp-release-btn">🕊️ 우주로 보내기</button>
@@ -1644,6 +1683,23 @@ function formatThoughtPettingLine(node){
   return `${d}/10 ✋`;
 }
 
+function syncDetailPetProgress(node){
+  const wrap=document.getElementById('dp-progress-wrap');
+  const fill=document.getElementById('dp-fill');
+  if(!wrap||!fill) return;
+  if(!node||node.userData.isCategory||node.userData.purified){
+    wrap.classList.remove('is-visible');
+    wrap.setAttribute('aria-hidden','true');
+    fill.style.width='0%';
+    return;
+  }
+  wrap.classList.add('is-visible');
+  wrap.setAttribute('aria-hidden','false');
+  const cap=node.userData.stages*10;
+  const pct=cap?Math.min(100,(node.userData.strokeCount/cap)*100):0;
+  fill.style.width=pct+'%';
+}
+
 function setThoughtLabelSelected(node, on){
   const el=node&&node.userData&&node.userData.label;
   if(!el||node.userData.isCategory) return;
@@ -1718,6 +1774,7 @@ function selectNode(node){
   } else {
     stageEl.textContent=formatThoughtPettingLine(node);
   }
+  syncDetailPetProgress(node);
 
   const aiEl=document.getElementById('ai-message');
   if(node.userData.isCategory){
@@ -1797,6 +1854,7 @@ function applyStroke(node){
   // Update detail panel if visible
   if(selectedNode===node){
     document.getElementById('dp-stage-info').textContent=formatThoughtPettingLine(node);
+    syncDetailPetProgress(node);
   }
 
   // Color shift toward white as progress builds
