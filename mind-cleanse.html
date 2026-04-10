@@ -1461,10 +1461,34 @@ function spawnPos(isCategory, parentMesh, siblingIndex){
   return new THREE.Vector3(Math.cos(th)*r, yJ, Math.sin(th)*r);
 }
 
-/** 저장된 좌표가 겹친 경우 대비: 부모별로 자식 궤도 재정렬 */
-function reflowChildOrbitsAroundParents(){
+/** 저장된 좌표와 무관하게, 루트 카테고리를 현재 구슬 수에 맞는 나선으로 둠 */
+function reflowRootCategorySpiral(t){
   if(typeof clock==='undefined'||!clock) return;
-  const t = clock.getElapsedTime();
+  const tt = t !== undefined ? t : clock.getElapsedTime();
+  const roots = nodes.filter(n=>
+    n.userData.isCategory && !n.userData.purified && n.userData.parentId == null
+  ).sort((a,b)=>a.userData.id-b.userData.id);
+  if(!roots.length) return;
+  const d = marbleLayoutScale();
+  const ga = Math.PI*(3-Math.sqrt(5));
+  roots.forEach((node, idx)=>{
+    const i = idx + 1;
+    const r = (4+Math.sqrt(i)*3) * d;
+    const th = i * ga;
+    const yBand = Math.sin(i * 2.513) * (7 * Math.min(1.15, d));
+    const childCount = nodes.filter(n=>n.userData.parentId===node.userData.id&&!n.userData.purified).length;
+    const gravityY = -Math.min(11, childCount*0.42);
+    const bob = Math.sin(tt*node.userData.floatSpd+node.userData.floatOff)*0.45;
+    node.position.x = Math.cos(th)*r;
+    node.position.z = Math.sin(th)*r;
+    node.userData.originY = yBand - gravityY - bob;
+  });
+}
+
+/** 부모별 자식 궤도 — 매 프레임 호출 시 구슬 수 변화에 맞춰 간격 유지 */
+function reflowChildOrbitsAroundParents(t){
+  if(typeof clock==='undefined'||!clock) return;
+  const tt = t !== undefined ? t : clock.getElapsedTime();
   nodes.filter(n=>n.userData.isCategory&&!n.userData.purified).forEach(cat=>{
     const kids=nodes.filter(n=>n.userData.parentId===cat.userData.id&&!n.userData.purified&&!n.userData.isCategory)
       .sort((a,b)=>a.userData.id-b.userData.id);
@@ -1472,7 +1496,7 @@ function reflowChildOrbitsAroundParents(){
       const off=childOrbitOffset(i);
       kid.position.x=cat.position.x+off.x;
       kid.position.z=cat.position.z+off.z;
-      const bob=Math.sin(t*kid.userData.floatSpd+kid.userData.floatOff)*0.45;
+      const bob=Math.sin(tt*kid.userData.floatSpd+kid.userData.floatOff)*0.45;
       kid.position.y=cat.position.y+off.y;
       kid.userData.originY=kid.position.y-bob;
     });
@@ -1550,19 +1574,44 @@ function updateConnections(elapsed){
     const bx=nb.position.x, by=nb.position.y, bz=nb.position.z;
     let dx=bx-ax, dy=by-ay, dz=bz-az;
     const L = Math.hypot(dx,dy,dz);
+    const arr=c.geometry.attributes.position.array;
+    const seg=c.userData.ropeSeg||2;
     if(L<1e-5){
-      const a=c.geometry.attributes.position.array;
-      a[0]=ax; a[1]=ay; a[2]=az; a[3]=bx; a[4]=by; a[5]=bz;
+      for(let j=0;j<seg;j++){ arr[j*3]=ax; arr[j*3+1]=ay; arr[j*3+2]=az; }
       c.geometry.attributes.position.needsUpdate=true;
       continue;
     }
     const inv=1/L;
     dx*=inv; dy*=inv; dz*=inv;
-    const amp=L*0.032;
-    const eps=amp*Math.sin(t*2.12+(c.userData.elasticPhase||0));
-    const a=c.geometry.attributes.position.array;
-    a[0]=ax+dx*eps; a[1]=ay+dy*eps; a[2]=az+dz*eps;
-    a[3]=bx-dx*eps; a[4]=by-dy*eps; a[5]=bz-dz*eps;
+    let px=-dz, py=0, pz=dx;
+    let pl=Math.hypot(px,py,pz);
+    if(pl<1e-6){ px=0; py=1; pz=0; pl=1; }
+    px/=pl; py/=pl; pz/=pl;
+    let qx=dy*pz-dz*py, qy=dz*px-dx*pz, qz=dx*py-dy*px;
+    let ql=Math.hypot(qx,qy,qz); qx/=ql; qy/=ql; qz/=ql;
+    let gx=dx*dy, gy=-1+dy*dy, gz=dz*dy;
+    let gl=Math.hypot(gx,gy,gz);
+    if(gl<1e-5){ gx=px; gy=py; gz=pz; gl=1; }
+    gx/=gl; gy/=gl; gz/=gl;
+    const ph=c.userData.ropePh||{};
+    const fq=c.userData.ropeFq||{st:1.8,sg:1.6,rp:2.6};
+    const sm=seg-1;
+    for(let j=0;j<seg;j++){
+      const u=sm>0?j/sm:0;
+      const k=Math.sin(Math.PI*u);
+      const k2=k*k;
+      const axial=L*0.048*Math.sin(t*2.05+ph.e)*k*Math.sin(u*11.3+ph.ax);
+      const breathe=L*0.024*Math.sin(t*fq.st+ph.st)*Math.sin(2*Math.PI*u*2.1+ph.ax);
+      let sx=ax+dx*L*u+dx*axial+dx*breathe*0.55;
+      let sy=ay+dy*L*u+dy*axial+dy*breathe*0.55;
+      let sz=az+dz*L*u+dz*axial+dz*breathe*0.55;
+      const sag=L*k2*(0.15+0.11*Math.sin(t*fq.sg+ph.sg));
+      sx+=gx*sag; sy+=gy*sag; sz+=gz*sag;
+      const w=L*k*(0.088*Math.sin(t*fq.rp+ph.r1+u*6.2)+0.058*Math.sin(t*fq.rp*1.41+ph.r2+u*9.5));
+      const w2=L*k*0.048*Math.sin(t*1.72+ph.r3+u*4.35);
+      sx+=px*w+qx*w2; sy+=py*w+qy*w2; sz+=pz*w+qz*w2;
+      arr[j*3]=sx; arr[j*3+1]=sy; arr[j*3+2]=sz;
+    }
     c.geometry.attributes.position.needsUpdate=true;
   }
 }
@@ -2602,7 +2651,8 @@ function loadData(){
     data.nodes.forEach(nd=>{
       if(nd.parentId&&idMap[nd.parentId]&&idMap[nd.id]) addConnection(idMap[nd.id],idMap[nd.parentId],true);
     });
-    reflowChildOrbitsAroundParents();
+    reflowChildOrbitsAroundParents(clock.getElapsedTime());
+    reflowRootCategorySpiral(clock.getElapsedTime());
     saveData();
     return true;
   }catch(e){ return false; }
@@ -2628,10 +2678,9 @@ function updateEmptyState(){
    ANIMATION
    ================================================================ */
 function animateNodes(t){
-  nodes.forEach(node=>{
+  const stepNode = (node)=>{
     if(node.userData.purifyingAnim||node.userData.purified) return;
 
-    // Gravity: category sinks based on child count
     let gravityY=0;
     if(node.userData.isCategory){
       const childCount=nodes.filter(n=>n.userData.parentId===node.userData.id&&!n.userData.purified).length;
@@ -2642,14 +2691,12 @@ function animateNodes(t){
     node.position.y = originY + gravityY + Math.sin(t*floatSpd+floatOff)*0.45;
     node.rotation.y += rotSpY;
 
-    // Subtle glow pulse
     const glow=node.children[0];
     if(glow&&pettingNode!==node){
       const skipPulse=selectedNode===node&&!node.userData.isCategory;
       if(!skipPulse) glow.material.opacity=.06+.04*Math.sin(t*1.4+floatOff);
     }
 
-    // Wobble during petting
     if(pettingNode===node && node.userData.wobbleMag){
       node.rotation.z=Math.sin(t*15)*node.userData.wobbleMag;
       node.userData.wobbleMag*=.88;
@@ -2657,11 +2704,14 @@ function animateNodes(t){
       node.rotation.z*=.85;
     }
 
-    // Scale lerp
     const isSel=selectedNode===node, isHov=hoveredNode===node&&pettingNode!==node;
     const ts=isSel?1.15:isHov?1.08:1.0;
     node.scale.lerp(new THREE.Vector3(ts,ts,ts),.1);
-  });
+  };
+
+  nodes.forEach(node=>{ if(node.userData.isCategory) stepNode(node); });
+  reflowChildOrbitsAroundParents(t);
+  nodes.forEach(node=>{ if(!node.userData.isCategory) stepNode(node); });
 
   ctrLight.intensity=2.2+.45*Math.sin(t*.7);
 }
@@ -2676,9 +2726,15 @@ window.addEventListener('resize',()=>{
 });
 
 const clock=new THREE.Clock();
+let prevActiveMarbleLayoutCount = -1;
 function loop(){
   requestAnimationFrame(loop);
   const t=clock.getElapsedTime();
+  const nMarbles = countActiveMarbles();
+  if(nMarbles !== prevActiveMarbleLayoutCount){
+    prevActiveMarbleLayoutCount = nMarbles;
+    reflowRootCategorySpiral(t);
+  }
   if(autoRotate) camTheta+=.0010;
   updateCamera();
   animateNodes(t);
@@ -2784,6 +2840,7 @@ async function loadFromCloud(){
       reflowChildOrbitsAroundParents();
       saveData();
     }
+    prevActiveMarbleLayoutCount = countActiveMarbles();
     updateHUD();
     showToast('☁️ 클라우드에서 불러왔어요');
   }catch(e){ console.warn('Cloud load error:', e.message); }
